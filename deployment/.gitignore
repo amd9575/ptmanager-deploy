@@ -12,3 +12,5 @@ yarn-error.log
 # OS
 .DS_Store
 
+#Script de deploiement
+deploy.sh

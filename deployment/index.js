@@ -5,8 +5,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const userRoutes = require('./routes/userRoutes');
+
+app.use(express.json());
+app.use('/api/users', userRoutes);
+
 app.get('/', (req, res) => {
-  res.send('API PTManager opérationnelle 🚀');
+  res.send('API PTManager opérationnelle');
 });
 
 app.get('/test-db', async (req, res) => {
