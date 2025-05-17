@@ -7,6 +7,9 @@ const PORT = process.env.PORT || 3000;
 
 const userRoutes = require('./routes/userRoutes');
 
+const initDbRoute = require('./routes/initDbRoute');
+app.use('/init-db', initDbRoute);
+
 app.use(express.json());
 app.use('/api/users', userRoutes);
 
