@@ -90,8 +90,11 @@ const createUser = async (req, res) => {
     res.status(201).json({ success: true, id_user: userId });
 
   } catch (err) {
-    console.error('Erreur registerUser :', err);
-    res.status(500).json({ error: 'Erreur interne serveur' });
+      if (err.code === '23505') { // erreur PostgreSQL : email déjà utilisé
+          return res.status(400).json({ error: 'EMAIL_ALREADY_EXISTS' });
+      }
+      console.error('Erreur registerUser :', err);
+      res.status(500).json({ error: 'SERVER_ERROR' });
   }
 };
 
@@ -106,6 +109,7 @@ const registerUser = async (req, res) => {
 
     res.status(200).json({ message: 'Utilisateur marqué comme enregistré avec succès' });
   } catch (error) {
+
     console.error('Erreur registerUser :', error);
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
