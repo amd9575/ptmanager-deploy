@@ -60,11 +60,20 @@ const createUser = async (user) => {
   return result.rows[0]._id_user;
 };
 
+const registerUser = async (userId, email) => {
+  const query = `
+    UPDATE users
+    SET user_is_registered = TRUE
+    WHERE _id_user = $1 AND email = $2
+  `;
+  return await db.query(query, [userId, email]);
+};
 
 module.exports = {
-  getUserByEmail,
-  updateLastConnexion,
-  updateDeviceToken, 
-  createUser,
+   getUserByEmail,
+   updateLastConnexion,
+   updateDeviceToken, 
+   createUser,
+   registerUser,
 };
 

@@ -53,7 +53,7 @@ const updateDeviceToken = async (req, res) => {
   }
 };
 
-const registerUser = async (req, res) => {
+const createUser = async (req, res) => {
   const {
     user_type,
     f_name,
@@ -95,8 +95,25 @@ const registerUser = async (req, res) => {
   }
 };
 
+const registerUser = async (req, res) => {
+  const { id_user, email } = req.body;
+
+  try {
+    const result = await userModel.registerUser(id_user, email);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Utilisateur non trouvé ou email incorrect" });
+    }
+
+    res.status(200).json({ message: 'Utilisateur marqué comme enregistré avec succès' });
+  } catch (error) {
+    console.error('Erreur registerUser :', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+};
+
 module.exports = { 
    loginUser,
-   updateDeviceToken, 
+   updateDeviceToken,
+   createUser,
    registerUser,
 };
