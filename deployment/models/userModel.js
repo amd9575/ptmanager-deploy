@@ -17,8 +17,20 @@ const updateLastConnexion = async (userId) => {
   await db.query(query, [userId]);
 };
 
+const updateDeviceToken = async (userId, deviceToken) => {
+  const query = `
+    UPDATE users
+    SET device_token = $1
+    WHERE _id_user = $2
+  `;
+  const result = await db.query(query, [deviceToken, userId]);
+  return result.rowCount;
+};
+
+
 module.exports = {
   getUserByEmail,
   updateLastConnexion,
+  updateDeviceToken, // 👈 ajoute cette ligne
 };
 

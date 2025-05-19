@@ -30,5 +30,27 @@ const loginUser = async (req, res) => {
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 };
+const updateDeviceToken = async (req, res) => {
+  const { userId, deviceToken } = req.body;
 
-module.exports = { loginUser };
+  if (!userId || !deviceToken) {
+    return res.status(400).json({ error: 'Champs manquants' });
+  }
+
+  try {
+    const updated = await userModel.updateDeviceToken(userId, deviceToken);
+    if (updated === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Erreur updateDeviceToken :', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+};
+
+
+module.exports = { 
+loginUser,
+updateDeviceToken, };
