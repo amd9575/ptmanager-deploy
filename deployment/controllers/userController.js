@@ -31,6 +31,9 @@ const loginUser = async (req, res) => {
   }
 };
 const updateDeviceToken = async (req, res) => {
+
+ console.log("Payload reçu :", req.body);
+
   const { userId, deviceToken } = req.body;
 
   if (!userId || !deviceToken) {
