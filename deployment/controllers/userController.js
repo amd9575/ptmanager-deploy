@@ -53,7 +53,50 @@ const updateDeviceToken = async (req, res) => {
   }
 };
 
+const registerUser = async (req, res) => {
+  const {
+    user_type,
+    f_name,
+    l_name,
+    email,
+    phone,
+    password,
+    user_is_admin,
+    user_is_actif,
+    user_is_registered
+  } = req.body;
+
+  // Vérification basique
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email et mot de passe requis' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = {
+      user_type,
+      f_name,
+      l_name,
+      email,
+      phone,
+      password: hashedPassword,
+      user_is_admin: user_is_admin ?? false,
+      user_is_actif: user_is_actif ?? true,
+      user_is_registered: user_is_registered ?? false
+    };
+
+    const userId = await userModel.createUser(newUser);
+    res.status(201).json({ success: true, id_user: userId });
+
+  } catch (err) {
+    console.error('Erreur registerUser :', err);
+    res.status(500).json({ error: 'Erreur interne serveur' });
+  }
+};
 
 module.exports = { 
-loginUser,
-updateDeviceToken, };
+   loginUser,
+   updateDeviceToken, 
+   registerUser,
+};
