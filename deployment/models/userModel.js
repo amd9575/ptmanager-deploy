@@ -20,7 +20,7 @@ const updateLastConnexion = async (userId) => {
 const updateDeviceToken = async (userId, deviceToken) => {
   const query = `
     UPDATE users
-    SET device_token = $1
+    SET user_device_token = $1
     WHERE _id_user = $2
   `;
   const result = await db.query(query, [deviceToken, userId]);
