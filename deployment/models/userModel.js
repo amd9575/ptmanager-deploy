@@ -1,13 +1,6 @@
 const db = require('../db');
 
-const getUserByEmail = async (email) => {
-  const query = `
-    SELECT * FROM users
-    WHERE email = $1
-  `;
-  const result = await db.query(query, [email]);
-  return result.rows[0]; // null si pas trouvé
-};
+
 
 const updateLastConnexion = async (userId) => {
   const query = `
@@ -61,15 +54,18 @@ const registerUser = async (userId, email) => {
   return await db.query(query, [userId, email]);
 };
 
+
+
 const getUserByEmail = async (email) => {
-  const query = `SELECT * FROM users WHERE email = $1`;
+  const query = `
+    SELECT * FROM users
+    WHERE email = $1
+  `;
   const result = await db.query(query, [email]);
   return result.rows[0]; // null si pas trouvé
 };
 
-
 module.exports = {
-   getUserByEmail,
    updateLastConnexion,
    updateDeviceToken, 
    createUser,
