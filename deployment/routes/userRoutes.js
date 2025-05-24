@@ -6,6 +6,7 @@ router.post('/login', userController.loginUser);
 router.post('/update-device-token', userController.updateDeviceToken);
 router.post('/create', userController.createUser);
 router.post('/register', userController.registerUser);
+router.get('/exists/:email', userController.checkIfUserExists);
 
 router.get('/ping', (req, res) => {
   res.send('pong depuis /api/users/ping');

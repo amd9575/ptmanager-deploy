@@ -115,9 +115,31 @@ const registerUser = async (req, res) => {
   }
 };
 
+const checkIfUserExists = async (req, res) => {
+  const email = decodeURIComponent(req.params.email); // pour gérer les @, %40, etc.
+
+  try {
+    const user = await userModel.getUserByEmail(email);
+
+    if (user) {
+      res.json({ exists: true });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (error) {
+    console.error('Erreur checkIfUserExists:', error.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+
+
+
 module.exports = { 
    loginUser,
    updateDeviceToken,
    createUser,
    registerUser,
+   checkIfUserExists,
 };
+
