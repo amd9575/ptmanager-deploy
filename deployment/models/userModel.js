@@ -65,11 +65,19 @@ const getUserByEmail = async (email) => {
   return result.rows[0]; // null si pas trouvé
 };
 
+const updatePassword = async (email, newPassword) => {
+    const query = `UPDATE users SET password = $1 WHERE email = $2`;
+    const values = [newPassword, email];
+    const result = await db.query(query, values);
+    return result.rowCount > 0;
+};
+
 module.exports = {
    updateLastConnexion,
    updateDeviceToken, 
    createUser,
    registerUser,
    getUserByEmail,
+   updatePassword,
 };
 

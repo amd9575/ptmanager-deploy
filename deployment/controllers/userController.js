@@ -132,7 +132,24 @@ const checkIfUserExists = async (req, res) => {
   }
 };
 
+const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+        if (!email || !newPassword) {
+            return res.status(400).json({ error: 'Email et mot de passe requis.' });
+        }
 
+        const updated = await userModel.updatePassword(email, newPassword);
+        if (updated) {
+            res.json({ message: 'Mot de passe mis à jour avec succès.' });
+        } else {
+            res.status(404).json({ error: "Utilisateur non trouvé ou mot de passe non modifié." });
+        }
+    } catch (error) {
+        console.error('Erreur resetPassword :', error);
+        res.status(500).json({ error: 'Erreur serveur.' });
+    }
+};
 
 
 module.exports = { 
@@ -141,5 +158,6 @@ module.exports = {
    createUser,
    registerUser,
    checkIfUserExists,
+   resetPassword,
 };
 
