@@ -13,6 +13,12 @@ app.use('/init-db', initDbRoute);
 app.use(express.json());
 app.use('/api/users', userRoutes);
 
+const objectRoutes = require('./routes/objectRoutes');
+app.use('/api/objects', objectRoutes);
+
+const imgRoutes = require('./routes/imgObjectRoutes');
+app.use('/api/imgs', imgRoutes);
+
 app.get('/', (req, res) => {
   res.send('API PTManager opérationnelle');
 });
