@@ -51,6 +51,52 @@ const deleteObject = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+const getObjectsFilteredByTime = async (req, res) => {
+  try {
+    const {
+      currentObjectId,
+      objectType,
+      objDate,
+      isLost,
+      isFound
+    } = req.query;
+
+    // Ici tu fais la requête MongoDB avec les filtres équivalents
+    // Ex. :
+    const date = new Date(objDate);
+    const delta = Constant.DELTA_JOURS_MAX || 5;
+
+    const fromDate = new Date(date);
+    fromDate.setDate(date.getDate() - delta);
+    const toDate = new Date(date);
+    toDate.setDate(date.getDate() + delta);
+
+    const objects = await ObjectModel.find({
+      _id: { $ne: currentObjectId },
+      object_type: objectType,
+      isLost: isLost === 'true',
+      isFound: isFound === 'true',
+      isActif: true,
+      dateObject: {
+        $gte: fromDate.toISOString().split("T")[0],
+        $lte: toDate.toISOString().split("T")[0],
+      }
+    }).populate('id_user').lean();
+
+    // Ajouter les images si besoin
+    const objectIds = objects.map(o => o._id);
+    const imgs = await ImgObjectModel.find({ id_object: { $in: objectIds } });
+
+    const objectsWithImgs = objects.map(obj => {
+      obj.imgObjectList = imgs.filter(img => img.id_object.toString() === obj._id.toString());
+      return obj;
+    });
+
+    res.json(objectsWithImgs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = { 
    createObject,
@@ -58,4 +104,5 @@ module.exports = {
    getObjectById,
    updateObject,
    deleteObject,
+   getObjectsFilteredByTime,
 };

@@ -7,6 +7,7 @@ router.get('/', objectController.getAllObjects);
 router.get('/:id', objectController.getObjectById);
 router.put('/:id', objectController.updateObject);
 router.delete('/:id', objectController.deleteObject);
+router.get('/filteredObjects', objectController.getObjectsFilteredByTime);
 
 module.exports = router;
 
