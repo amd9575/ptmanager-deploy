@@ -1,108 +1,88 @@
-const ObjectModel = require('../models/objectModel');
+const objectModel = require('../models/objectModel');
 
-// Ajouter un objet
+// Créer un objet
 const createObject = async (req, res) => {
   try {
-    const object = new ObjectModel(req.body);
-    const savedObject = await object.save();
-    res.status(201).json(savedObject);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    const id = await objectModel.insertObject(req.body);
+    res.status(201).json({ success: true, _id_object: id });
+  } catch (error) {
+    console.error('createObject error:', error);
+    res.status(500).json({ error: 'Erreur lors de la création de l’objet' });
   }
 };
 
-// Lister tous les objets
+// Lire tous les objets
 const getAllObjects = async (req, res) => {
   try {
-    const objects = await ObjectModel.find();
-    res.json(objects);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const data = await objectModel.getAllObjects();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur récupération objets' });
   }
 };
 
-// Obtenir un objet par ID
+// Lire un objet par ID
 const getObjectById = async (req, res) => {
   try {
-    const object = await ObjectModel.findById(req.params.id);
-    if (!object) return res.status(404).json({ message: 'Objet introuvable' });
+    const object = await objectModel.getObjectById(req.params.id);
+    if (!object) return res.status(404).json({ error: 'Objet non trouvé' });
     res.json(object);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 };
 
-// Mettre à jour un objet
+// Modifier un objet
 const updateObject = async (req, res) => {
   try {
-    const updated = await ObjectModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await objectModel.updateObject(req.params.id, req.body);
     res.json(updated);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+  } catch (error) {
+    res.status(400).json({ error: 'Erreur mise à jour' });
   }
 };
 
 // Supprimer un objet
 const deleteObject = async (req, res) => {
   try {
-    await ObjectModel.findByIdAndDelete(req.params.id);
+    await objectModel.deleteObject(req.params.id);
     res.json({ message: 'Objet supprimé' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur suppression' });
   }
 };
+
+// Objets filtrés
 const getObjectsFilteredByTime = async (req, res) => {
+  const {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound
+  } = req.query;
+
   try {
-    const {
+    const result = await objectModel.getObjectsFilteredByTime(
       currentObjectId,
       objectType,
       objDate,
-      isLost,
-      isFound
-    } = req.query;
-
-    // Ici tu fais la requête MongoDB avec les filtres équivalents
-    // Ex. :
-    const date = new Date(objDate);
-    const delta = Constant.DELTA_JOURS_MAX || 5;
-
-    const fromDate = new Date(date);
-    fromDate.setDate(date.getDate() - delta);
-    const toDate = new Date(date);
-    toDate.setDate(date.getDate() + delta);
-
-    const objects = await ObjectModel.find({
-      _id: { $ne: currentObjectId },
-      object_type: objectType,
-      isLost: isLost === 'true',
-      isFound: isFound === 'true',
-      isActif: true,
-      dateObject: {
-        $gte: fromDate.toISOString().split("T")[0],
-        $lte: toDate.toISOString().split("T")[0],
-      }
-    }).populate('id_user').lean();
-
-    // Ajouter les images si besoin
-    const objectIds = objects.map(o => o._id);
-    const imgs = await ImgObjectModel.find({ id_object: { $in: objectIds } });
-
-    const objectsWithImgs = objects.map(obj => {
-      obj.imgObjectList = imgs.filter(img => img.id_object.toString() === obj._id.toString());
-      return obj;
-    });
-
-    res.json(objectsWithImgs);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+      isLost === 'true',
+      isFound === 'true'
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('getObjectsFilteredByTime error:', error);
+    res.status(500).json({ error: 'Erreur récupération objets filtrés' });
   }
 };
 
-module.exports = { 
-   createObject,
-   getAllObjects,
-   getObjectById,
-   updateObject,
-   deleteObject,
-   getObjectsFilteredByTime,
+module.exports = {
+  createObject,
+  getAllObjects,
+  getObjectById,
+  updateObject,
+  deleteObject,
+  getObjectsFilteredByTime,
 };
+
