@@ -62,7 +62,7 @@ const updateObject = async (id, newData) => {
       object_is_found = $11,
       object_latitude = $12,
       object_longitude = $13,
-      modifDate = NOW()
+      object_modif_date = NOW()
     WHERE _id_object = $14
     RETURNING *
   `;
@@ -96,36 +96,49 @@ const deleteObject = async (id) => {
 
 // Objets filtrés temporellement
 const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
-  const delta = 5;
-  const date = new Date(objDate);
+  try {
+    const id = parseInt(currentObjectId, 10);
+    const date = new Date(objDate);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date format: ' + objDate);
+    }
 
-  const fromDate = new Date(date);
-  fromDate.setDate(date.getDate() - delta);
-  const toDate = new Date(date);
-  toDate.setDate(date.getDate() + delta);
+    const delta = 5;
+    const fromDate = new Date(date);
+    fromDate.setDate(date.getDate() - delta);
+    const toDate = new Date(date);
+    toDate.setDate(date.getDate() + delta);
 
-  const query = `
-    SELECT * FROM object
-    WHERE _id_object != $1
-      AND object_type = $2
-      AND object_is_lost = $3
-      AND object_is_found = $4
-      AND object_is_actif = TRUE
-      AND object_date BETWEEN $5 AND $6
-  `;
+    const query = `
+      SELECT * FROM object
+      WHERE _id_object != $1
+        AND object_type = $2
+        AND object_is_lost = $3
+        AND object_is_found = $4
+        AND object_is_actif = TRUE
+        AND object_date BETWEEN $5 AND $6
+    `;
 
-  const values = [
-    currentObjectId,
-    objectType,
-    isLost,
-    isFound,
-    fromDate.toISOString().split('T')[0],
-    toDate.toISOString().split('T')[0]
-  ];
+    const values = [
+      id,
+      objectType,
+      isLost,
+      isFound,
+      fromDate.toISOString().split('T')[0],
+      toDate.toISOString().split('T')[0]
+    ];
 
-  const result = await db.query(query, values);
-  return result.rows;
+    console.log("getObjectsFilteredByTime - values:", values);
+
+    const result = await db.query(query, values);
+    return result.rows;
+
+  } catch (err) {
+    console.error('getObjectsFilteredByTime error (model):', err);
+    throw err;
+  }
 };
+
 
 module.exports = {
   insertObject,
