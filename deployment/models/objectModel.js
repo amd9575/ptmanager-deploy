@@ -4,8 +4,8 @@ const db = require('../db');
 const insertObject = async (object) => {
   const query = `
     INSERT INTO object (
-      id_user, object_type, description, address, city, zipcode, country,
-      dateObject, timeObject, isActif, isLost, isFound, latitude, longitude
+      _id_user, object_type, object_description, object_address, object_city, object_zipcode, object_country,
+      object_date, object_time, object_is_actif, object_is_lost, object_is_found, object_latitude, object_longitude
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING _id_object
   `;
@@ -50,18 +50,18 @@ const updateObject = async (id, newData) => {
   const query = `
     UPDATE object SET
       object_type = $1,
-      description = $2,
-      address = $3,
-      city = $4,
-      zipcode = $5,
-      country = $6,
-      dateObject = $7,
-      timeObject = $8,
-      isActif = $9,
-      isLost = $10,
-      isFound = $11,
-      latitude = $12,
-      longitude = $13,
+      object_description = $2,
+      object_address = $3,
+      object_city = $4,
+      object_zipcode = $5,
+      object_country = $6,
+      object_date = $7,
+      object_time = $8,
+      object_is_actif = $9,
+      object_is_lost = $10,
+      object_is_found = $11,
+      object_latitude = $12,
+      object_longitude = $13,
       modifDate = NOW()
     WHERE _id_object = $14
     RETURNING *
@@ -108,10 +108,10 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
     SELECT * FROM object
     WHERE _id_object != $1
       AND object_type = $2
-      AND isLost = $3
-      AND isFound = $4
-      AND isActif = TRUE
-      AND dateObject BETWEEN $5 AND $6
+      AND object_is_lost = $3
+      AND object_is_found = $4
+      AND object_is_actif = TRUE
+      AND object_date BETWEEN $5 AND $6
   `;
 
   const values = [
