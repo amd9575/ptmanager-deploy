@@ -99,7 +99,7 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
   try {
     const delta = 5;
     const date = new Date(objDate);
-
+ console.log('>>> Dates from-to :');
     const fromDate = new Date(date);
     fromDate.setDate(date.getDate() - delta);
     const toDate = new Date(date);
