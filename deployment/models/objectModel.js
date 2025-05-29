@@ -3,7 +3,7 @@ const db = require('../db');
 // Créer un objet
 const insertObject = async (object) => {
   const query = `
-    INSERT INTO objects (
+    INSERT INTO object (
       id_user, object_type, description, address, city, zipcode, country,
       dateObject, timeObject, isActif, isLost, isFound, latitude, longitude
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -33,14 +33,14 @@ const insertObject = async (object) => {
 
 // Lire tous les objets
 const getAllObjects = async () => {
-  const query = `SELECT * FROM objects ORDER BY createDate DESC`;
+  const query = `SELECT * FROM object ORDER BY createDate DESC`;
   const result = await db.query(query);
   return result.rows;
 };
 
 // Lire un objet par ID
 const getObjectById = async (id) => {
-  const query = `SELECT * FROM objects WHERE _id_object = $1`;
+  const query = `SELECT * FROM object WHERE _id_object = $1`;
   const result = await db.query(query, [id]);
   return result.rows[0];
 };
@@ -48,7 +48,7 @@ const getObjectById = async (id) => {
 // Mettre à jour un objet
 const updateObject = async (id, newData) => {
   const query = `
-    UPDATE objects SET
+    UPDATE object SET
       object_type = $1,
       description = $2,
       address = $3,
@@ -90,7 +90,7 @@ const updateObject = async (id, newData) => {
 
 // Supprimer un objet
 const deleteObject = async (id) => {
-  const query = `DELETE FROM objects WHERE _id_object = $1`;
+  const query = `DELETE FROM object WHERE _id_object = $1`;
   await db.query(query, [id]);
 };
 
@@ -105,7 +105,7 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
   toDate.setDate(date.getDate() + delta);
 
   const query = `
-    SELECT * FROM objects
+    SELECT * FROM object
     WHERE _id_object != $1
       AND object_type = $2
       AND isLost = $3
