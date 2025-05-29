@@ -62,6 +62,14 @@ const getObjectsFilteredByTime = async (req, res) => {
     isFound
   } = req.query;
 
+  console.log('Requête filtrée reçue avec :', {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound
+  });
+
   try {
     const result = await objectModel.getObjectsFilteredByTime(
       currentObjectId,
@@ -76,6 +84,7 @@ const getObjectsFilteredByTime = async (req, res) => {
     res.status(500).json({ error: 'Erreur récupération objets filtrés' });
   }
 };
+
 
 module.exports = {
   createObject,

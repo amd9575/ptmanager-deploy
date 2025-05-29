@@ -97,17 +97,18 @@ const deleteObject = async (id) => {
 // Objets filtrés temporellement
 const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
   try {
-    const id = parseInt(currentObjectId, 10);
-    const date = new Date(objDate);
-    if (isNaN(date.getTime())) {
-      throw new Error('Invalid date format: ' + objDate);
-    }
-
     const delta = 5;
+    const date = new Date(objDate);
+
     const fromDate = new Date(date);
     fromDate.setDate(date.getDate() - delta);
     const toDate = new Date(date);
     toDate.setDate(date.getDate() + delta);
+
+    console.log('Filtrage avec dates :', {
+      from: fromDate.toISOString().split('T')[0],
+      to: toDate.toISOString().split('T')[0],
+    });
 
     const query = `
       SELECT * FROM object
@@ -120,7 +121,7 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
     `;
 
     const values = [
-      id,
+      currentObjectId,
       objectType,
       isLost,
       isFound,
@@ -128,13 +129,12 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
       toDate.toISOString().split('T')[0]
     ];
 
-    console.log("getObjectsFilteredByTime - values:", values);
+    console.log('Query values:', values);
 
     const result = await db.query(query, values);
     return result.rows;
-
   } catch (err) {
-    console.error('getObjectsFilteredByTime error (model):', err);
+    console.error('Erreur dans getObjectsFilteredByTime (model):', err);
     throw err;
   }
 };
