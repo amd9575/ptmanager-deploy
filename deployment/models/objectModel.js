@@ -5,7 +5,7 @@ const insertObject = async (object) => {
   const query = `
     INSERT INTO object (
       _id_user, object_type, object_description, object_address, object_city, object_zipcode, object_country,
-      object_date, object_time, object_is_actif, object_is_lost, object_is_found, object_latitude, object_longitude
+      object_date, object_time, object_creat_date,  object_is_actif, object_is_lost, object_is_found, object_latitude, object_longitude
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING _id_object
   `;
@@ -20,6 +20,7 @@ const insertObject = async (object) => {
     object.country,
     object.dateObject,
     object.timeObject,
+    NOW(),
     object.isActif,
     object.isLost,
     object.isFound,
