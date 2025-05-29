@@ -2,6 +2,7 @@ const ImgModel = require('../models/imgObjectModel');
 
 // ➕ Ajouter une image
 const createImg = async (req, res) => {
+  console.log(">>> createImg appelé avec :", req.body);
   try {
     const id = await ImgModel.insertImage(req.body);
     res.status(201).json({ success: true, _id_img: id });
