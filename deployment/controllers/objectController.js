@@ -4,7 +4,8 @@ const objectModel = require('../models/objectModel');
 const createObject = async (req, res) => {
   try {
     const id = await objectModel.insertObject(req.body);
-    res.status(201).json({ success: true, _id_object: id });
+//    res.status(201).json({ success: true, _id_object: id });
+    res.status(201).json({ id: newId });
   } catch (error) {
     console.error('createObject error:', error);
     res.status(500).json({ error: 'Erreur lors de la création de l’objet' });
