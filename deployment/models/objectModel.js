@@ -28,7 +28,10 @@ const insertObject = async (object) => {
   ];
 
   const result = await db.query(query, values);
-  return result.rows[0]._id_object;
+  const newId = result.rows[0]._id_object;
+  res.status(201).json({ id: newId });
+
+  return newId;
 };
 
 // Lire tous les objets
