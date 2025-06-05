@@ -19,6 +19,9 @@ app.use('/api/objects', objectRoutes);
 const imgRoutes = require('./routes/imgObjectRoutes');
 app.use('/api/imgs', imgRoutes);
 
+const notificationRoute = require('./routes/notificationRoute');
+app.use('/api/notifications', notificationRoute);
+
 app.get('/', (req, res) => {
   res.send('API PTManager opérationnelle');
 });

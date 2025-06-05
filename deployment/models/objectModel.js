@@ -1,4 +1,5 @@
 const db = require('../db');
+const { getImagesByObjectId } = require('./imgObjectModel');
 
 // Créer un objet
 const insertObject = async (object) => {
@@ -141,6 +142,23 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
   }
 };
 
+const getObjectsByIds = async (ids) => {
+  if (!ids || ids.length === 0) return [];
+
+  const placeholders = ids.map((_, i) => `$${i + 1}`).join(', ');
+  const query = `SELECT * FROM object WHERE _id_object IN (${placeholders})`;
+
+  const result = await db.query(query, ids);
+  const objects = result.rows;
+
+  // Pour chaque objet, on ajoute ses images
+  for (const obj of objects) {
+    const images = await getImagesByObjectId(obj._id_object);
+    obj.images = images;
+  }
+
+  return objects;
+};
 
 module.exports = {
   insertObject,
@@ -149,5 +167,6 @@ module.exports = {
   updateObject,
   deleteObject,
   getObjectsFilteredByTime,
+  getObjectsByIds,
 };
 

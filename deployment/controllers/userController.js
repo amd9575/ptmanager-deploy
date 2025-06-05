@@ -150,7 +150,69 @@ const resetPassword = async (req, res) => {
         res.status(500).json({ error: 'Erreur serveur.' });
     }
 };
+//Methode qui permet de recuperre les parametres d'un utilisateur pour lui envoyer un email
+const getUserObjectDetails = async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Missing or invalid ids' });
+  }
 
+  try {
+    const result = await userModel.getUsersAndObjectsByObjectIds(ids);
+    res.json(result);
+  } catch (err) {
+    console.error("getUserObjectDetails error:", err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const getDeviceToken = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const token = await userModel.getDeviceTokenByUserId(id);
+
+    if (!token) {
+      return res.status(404).json({ error: 'Token non trouvé pour cet utilisateur' });
+    }
+
+    res.json({ device_token: token });
+  } catch (err) {
+    console.error("Erreur récupération token :", err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+  
+// 📝 Mise à jour d’un utilisateur
+const updateUser = async (req, res) => {
+  try {
+    const updatedUser = await userModel.updateUser(req.params.id, req.body);
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Erreur updateUser:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour de l’utilisateur' });
+  }
+};
+
+// ❌ Suppression d’un utilisateur
+const deleteUser = async (req, res) => {
+  try {
+    await userModel.deleteUser(req.params.id);
+    res.json({ message: 'Utilisateur supprimé' });
+  } catch (error) {
+    console.error('Erreur deleteUser:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression de l’utilisateur' });
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await UserModel.getAllUsers(); // dans userModel.js
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error });
+  }
+};
 
 module.exports = { 
    loginUser,
@@ -159,5 +221,9 @@ module.exports = {
    registerUser,
    checkIfUserExists,
    resetPassword,
+   getUserObjectDetails,
+   getDeviceToken,
+   updateUser,
+   deleteUser,
+   getAllUsers,
 };
-

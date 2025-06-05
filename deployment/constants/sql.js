@@ -51,9 +51,23 @@ const SQL_CREATE_TABLE_IMG_OBJECT = `
   );
 `;
 
+const SQL_CREATE_TABLE_NOTIFICATION = `
+  CREATE TABLE IF NOT EXISTS notification (
+    _id_notif SERIAL PRIMARY KEY,
+    _id_user INTEGER,
+    email TEXT,
+    notif_message VARCHAR(64),
+    _id_object INTEGER,
+    notif_is_managed BOOLEAN,
+    CONSTRAINT fk_user FOREIGN KEY (_id_user) REFERENCES users(_id_user) ON DELETE CASCADE,
+    CONSTRAINT fk_object FOREIGN KEY (_id_object) REFERENCES object(_id_object) ON DELETE CASCADE
+  );
+`;
+
 module.exports = {
   SQL_CREATE_TABLE_USER,
   SQL_CREATE_TABLE_OBJECT,
   SQL_CREATE_TABLE_IMG_OBJECT,
+  SQL_CREATE_TABLE_NOTIFICATION,
 };
 

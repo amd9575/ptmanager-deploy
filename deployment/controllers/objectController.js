@@ -46,6 +46,9 @@ const updateObject = async (req, res) => {
 // Supprimer un objet
 const deleteObject = async (req, res) => {
   try {
+    const object = await objectModel.getObjectById(req.params.id);
+    if (!object) return res.status(404).json({ error: 'Objet introuvable' });
+
     await objectModel.deleteObject(req.params.id);
     res.json({ message: 'Objet supprimé' });
   } catch (error) {
@@ -86,6 +89,22 @@ const getObjectsFilteredByTime = async (req, res) => {
   }
 };
 
+const getSimilarObjects = async (req, res) => {
+  const { objectIds } = req.body;
+
+  if (!Array.isArray(objectIds) || objectIds.length === 0) {
+    return res.status(400).json({ error: "objectIds doit être un tableau non vide" });
+  }
+
+  try {
+    const objects = await objectModel.getObjectsByIds(objectIds);
+    res.json({ objects });
+  } catch (error) {
+    console.error('Erreur getSimilarObjects:', error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
 
 module.exports = {
   createObject,
@@ -94,5 +113,6 @@ module.exports = {
   updateObject,
   deleteObject,
   getObjectsFilteredByTime,
+  getSimilarObjects,
 };
 
