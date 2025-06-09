@@ -77,26 +77,28 @@ const updatePassword = async (email, newPassword) => {
 //SELECT  user.email, user._id_user, object.description, object.date_creation FROM object, user WHERE object.id_user = user._id_user AND object.id = ?
 
 //async function getUsersAndObjectsByObjectIds(ids) {  'est une autre facon d'ecrire getUsersAndObjectsByObjectIds
-const getUsersAndObjectsByObjectIds = async(ids) =>{
-  const results = [];
+   const getUsersAndObjectsByObjectIds = async(ids) =>{
+     const results = [];
 
-  for (const id of ids) {
-    const query = `
-      SELECT 
-        o._id_user AS "O_ID",
-        o.object_description AS "O_DESC",
-        o.object_creat_date AS "O_DATE_CREAT",
-        u._id_user AS "U_ID",
-        u.email AS "U_EMAIL"
-      FROM object o
-      JOIN users u ON o._id_user = u._id_user
-      WHERE o._id_object = ANY($1)
-    `;
-    const { rows } = await db.query(query, [id]);
-    if (rows.length > 0) {
-      results.push(rows[0]);
-    }
-  }
+     for (const id of ids) {
+       const query = `
+         SELECT 
+           o._id_user AS "O_ID",
+           o.object_description AS "O_DESC",
+           o.object_creat_date AS "O_DATE_CREAT",
+           u._id_user AS "U_ID",
+           u.email AS "U_EMAIL"
+         FROM object o
+         JOIN users u ON o._id_user = u._id_user
+         WHERE o._id_object = ANY($1)
+       `;
+       const { rows } = await db.query(query, [id]);
+       if (rows.length > 0) {
+         results.push(rows[0]);
+       }
+     }
+   }
+
   const getDeviceTokenByUserId = async (userId) => {
      const query = `SELECT user_device_token FROM users WHERE _id_user = $1`;
      const result = await db.query(query, [userId]);
@@ -106,46 +108,46 @@ const getUsersAndObjectsByObjectIds = async(ids) =>{
   };
 
 // 🔄 Mise à jour d’un utilisateur
-const updateUser = async (id, userData) => {
-  const query = `
-    UPDATE users SET
-      user_type = $1,
-      user_fname = $2,
-      user_lname = $3,
-      user_email = $4,
-      user_phone = $5,
-      user_password = $6,
-      user_isactif = $7,
-      user_isadmin = $8
-    WHERE _id_user = $9
-    RETURNING *;
-  `;
-  const values = [
-    userData.user_type,
-    userData.user_fname,
-    userData.user_lname,
-    userData.user_email,
-    userData.user_phone,
-    userData.user_password,
-    userData.user_isactif,
-    userData.user_isadmin,
-    id
-  ];
-  const result = await db.query(query, values);
-  return result.rows[0];
-};
+   const updateUser = async (id, userData) => {
+     const query = `
+       UPDATE users SET
+         user_type = $1,
+         user_fname = $2,
+         user_lname = $3,
+         user_email = $4,
+         user_phone = $5,
+         user_password = $6,
+         user_isactif = $7,
+         user_isadmin = $8
+       WHERE _id_user = $9
+       RETURNING *;
+     `;
+     const values = [
+       userData.user_type,
+       userData.user_fname,
+       userData.user_lname,
+       userData.user_email,
+       userData.user_phone,
+       userData.user_password,
+       userData.user_isactif,
+       userData.user_isadmin,
+       id
+     ];
+     const result = await db.query(query, values);
+     return result.rows[0];
+   };
 
-// 🗑️ Supprimer un utilisateur
-const deleteUser = async (id) => {
-  const query = `DELETE FROM users WHERE _id_user = $1`;
-  await db.query(query, [id]);
-};
+   // 🗑️ Supprimer un utilisateur
+   const deleteUser = async (id) => {
+     const query = `DELETE FROM users WHERE _id_user = $1`;
+     await db.query(query, [id]);
+   };
 
-async function getAllUsers() {
-  const query = `SELECT * FROM users ORDER BY id ASC`;
-  const result = await db.query(query);
-  return result.rows;
-}
+   async function getAllUsers() {
+     const query = `SELECT * FROM users ORDER BY id ASC`;
+     const result = await db.query(query);
+     return result.rows;
+   }
 
 
 module.exports = {
