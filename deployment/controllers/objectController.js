@@ -37,6 +37,7 @@ const getObjectById = async (req, res) => {
 const updateObject = async (req, res) => {
   try {
     const updated = await objectModel.updateObject(req.params.id, req.body);
+    console.log("updateObject called with ID:", req.params.id) 
     res.json(updated);
   } catch (error) {
     res.status(400).json({ error: 'Erreur mise à jour' });
