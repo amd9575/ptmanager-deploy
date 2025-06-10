@@ -105,6 +105,19 @@ const getSimilarObjects = async (req, res) => {
   }
 };
 
+const getObjectsByUser = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const objects = await objectModel.getObjectsByUser(userId);
+    res.status(200).json(objects); // renvoie directement un tableau
+  } catch (err) {
+    console.error('Erreur getObjectsByUser:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
+
 
 module.exports = {
   createObject,
@@ -114,5 +127,6 @@ module.exports = {
   deleteObject,
   getObjectsFilteredByTime,
   getSimilarObjects,
+  getObjectsByUser,
 };
 

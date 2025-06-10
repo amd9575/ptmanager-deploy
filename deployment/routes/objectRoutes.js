@@ -11,6 +11,7 @@ router.put('/:id', objectController.updateObject);
 router.delete('/:id', objectController.deleteObject);
 router.post('/object-details', userController.getUserObjectDetails);
 router.post('/similar', objectController.getSimilarObjects);
+router.get('/byUser/:id', objectController.getObjectsByUser);
 
 
 module.exports = router;

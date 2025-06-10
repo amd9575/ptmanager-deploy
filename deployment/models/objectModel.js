@@ -160,6 +160,13 @@ const getObjectsByIds = async (ids) => {
   return objects;
 };
 
+const getObjectsByUser = async (userId) => {
+  const query = 'SELECT * FROM objects WHERE id_user = $1';
+  const result = await db.query(query, [userId]);
+  return result.rows;
+};
+
+
 module.exports = {
   insertObject,
   getAllObjects,
@@ -168,5 +175,7 @@ module.exports = {
   deleteObject,
   getObjectsFilteredByTime,
   getObjectsByIds,
+  getObjectsByUser,
+
 };
 
