@@ -161,7 +161,7 @@ const getObjectsByIds = async (ids) => {
 };
 
 const getObjectsByUser = async (userId) => {
-  const query = 'SELECT * FROM objects WHERE id_user = $1';
+  const query = 'SELECT * FROM object WHERE id_user = $1';
   const result = await db.query(query, [userId]);
   return result.rows;
 };
