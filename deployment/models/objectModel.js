@@ -197,7 +197,7 @@ const getObjectsByUser = async (userId) => {
 
   for (const obj of objects) {
     try {
-      const imgQuery = `SELECT * FROM imgobject WHERE _id_object = $1`;
+      const imgQuery = `SELECT * FROM image_object WHERE _id_object = $1`;
       const imgResult = await db.query(imgQuery, [obj._id_object]);
       obj.images = imgResult.rows || [];
     } catch (imgErr) {
