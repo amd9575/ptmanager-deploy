@@ -190,7 +190,7 @@ const getObjectsByIds = async (ids) => {
 };
 
 const getObjectsByUser = async (userId) => {
-  const query = `SELECT * FROM object WHERE _id_user = $1 ORDER BY createDate DESC`;
+  const query = `SELECT * FROM object WHERE _id_user = $1 ORDER BY object_creat_date DESC`;
   const result = await db.query(query, [userId]);
   console.log('-------------------------------Dans getObjectsByUser------------------------');
   const objects = result.rows;
