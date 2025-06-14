@@ -114,16 +114,16 @@ const getSimilarObjects = async (req, res) => {
 
 const getObjectsByUser = async (req, res) => {
   const userId = req.params.id;
+  console.log("==> getObjectsByUser appelé avec ID:", userId);
 
   try {
-    const objects = await objectModel.getObjectsByUser(userId);
-    res.status(200).json(objects); // renvoie directement un tableau
+    const data = await objectModel.getObjectsByUser(userId);
+    res.json(data);
   } catch (err) {
-    console.error('Erreur getObjectsByUser:', err);
-    res.status(500).json({ error: 'Erreur serveur' });
+    console.error("Erreur getObjectsByUser:", err);
+    res.status(500).json({ error: 'Erreur récupération objets par user' });
   }
 };
-
 
 
 module.exports = {

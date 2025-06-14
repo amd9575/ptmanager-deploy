@@ -44,10 +44,6 @@ const insertObject = async (object) => {
 
 const getAllObjects = async () => {
   try {
-
-     console.log('------ GETALLOGBECTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT ');
-
-
     const query = `SELECT * FROM object ORDER BY createDate DESC`;
     const result = await db.query(query);
     const objects = result.rows;
@@ -194,9 +190,23 @@ const getObjectsByIds = async (ids) => {
 };
 
 const getObjectsByUser = async (userId) => {
-  const query = 'SELECT * FROM object WHERE _id_user = $1';
+  const query = `SELECT * FROM object WHERE _id_user = $1 ORDER BY createDate DESC`;
   const result = await db.query(query, [userId]);
-  return result.rows;
+  console.log('-------------------------------Dans getObjectsByUser------------------------');
+  const objects = result.rows;
+
+  for (const obj of objects) {
+    try {
+      const imgQuery = `SELECT * FROM imgobject WHERE _id_object = $1`;
+      const imgResult = await db.query(imgQuery, [obj._id_object]);
+      obj.images = imgResult.rows || [];
+    } catch (imgErr) {
+      console.error(`Erreur images pour objet ${obj._id_object}:`, imgErr);
+      obj.images = [];
+    }
+  }
+
+  return objects;
 };
 
 
