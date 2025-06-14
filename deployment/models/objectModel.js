@@ -44,6 +44,10 @@ const insertObject = async (object) => {
 
 const getAllObjects = async () => {
   try {
+
+     console.log('------ GETALLOGBECTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT ');
+
+
     const query = `SELECT * FROM object ORDER BY createDate DESC`;
     const result = await db.query(query);
     const objects = result.rows;
