@@ -35,11 +35,27 @@ const insertObject = async (object) => {
 };
 
 // Lire tous les objets
+//const getAllObjects = async () => {
+//  const query = `SELECT * FROM object ORDER BY createDate DESC`;
+//  const result = await db.query(query);
+//  return result.rows;
+//};
+
+
 const getAllObjects = async () => {
   const query = `SELECT * FROM object ORDER BY createDate DESC`;
   const result = await db.query(query);
-  return result.rows;
+  const objects = result.rows;
+
+  for (const obj of objects) {
+    const imageQuery = `SELECT * FROM imgobject WHERE _id_object = $1`;
+    const imageResult = await db.query(imageQuery, [obj._id_object]);
+    obj.images = imageResult.rows; // Ajoute le tableau d'images à chaque objet
+  }
+
+  return objects;
 };
+
 
 // Lire un objet par ID
 const getObjectById = async (id) => {
