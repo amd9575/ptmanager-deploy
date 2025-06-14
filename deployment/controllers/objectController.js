@@ -18,6 +18,7 @@ const getAllObjects = async (req, res) => {
     const data = await objectModel.getAllObjects();
     res.json(data);
   } catch (error) {
+    console.error("Erreur getAllObjects :", error);
     res.status(500).json({ error: 'Erreur récupération objets' });
   }
 };
@@ -37,12 +38,17 @@ const getObjectById = async (req, res) => {
 const updateObject = async (req, res) => {
   try {
     const updated = await objectModel.updateObject(req.params.id, req.body);
-    console.log("updateObject called with ID:", req.params.id) 
-    res.json(updated);
+    console.log("updateObject called with ID:", req.params.id);
+
+    // On renvoie l'objet mis à jour
+    res.status(200).json(updated);
+
   } catch (error) {
+    console.error("Erreur dans updateObject:", error);
     res.status(400).json({ error: 'Erreur mise à jour' });
   }
 };
+
 
 // Supprimer un objet
 const deleteObject = async (req, res) => {
