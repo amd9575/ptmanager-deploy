@@ -43,17 +43,30 @@ const insertObject = async (object) => {
 
 
 const getAllObjects = async () => {
-  const query = `SELECT * FROM object ORDER BY createDate DESC`;
-  const result = await db.query(query);
-  const objects = result.rows;
+  try {
+    const query = `SELECT * FROM object ORDER BY createDate DESC`;
+    const result = await db.query(query);
+    const objects = result.rows;
 
-  for (const obj of objects) {
-    const imageQuery = `SELECT * FROM imgobject WHERE _id_object = $1`;
-    const imageResult = await db.query(imageQuery, [obj._id_object]);
-    obj.images = imageResult.rows; // Ajoute le tableau d'images à chaque objet
+    console.log('------ jai ' + objects.length + ' objets');
+
+    for (const obj of objects) {
+      try {
+        const imageQuery = `SELECT * FROM imgobject WHERE _id_object = ?`;
+        const imageResult = await db.query(imageQuery, [obj._id_object]);
+        obj.images = imageResult.rows || [];
+      } catch (imgErr) {
+        console.error(`Erreur chargement images pour objet ${obj._id_object}:`, imgErr);
+        obj.images = []; // On évite le crash en mettant une liste vide
+      }
+    }
+
+    return objects;
+
+  } catch (err) {
+    console.error('Erreur dans getAllObjects (model):', err);
+    throw err; // à renvoyer au contrôleur
   }
-
-  return objects;
 };
 
 
