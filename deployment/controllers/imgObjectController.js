@@ -32,9 +32,9 @@ const getImgsByObjectId = async (req, res) => {
 };
 
 // ❌ Supprimer une image
-const deleteImg = async (req, res) => {
+const deleteImgByImgId = async (req, res) => {
   try {
-    await ImgModel.deleteImage(req.params.id);
+    await ImgModel.deleteImageByImgId(req.params.id);
     res.json({ message: 'Image supprimée' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -58,7 +58,7 @@ module.exports = {
   createImg,
   getAllImgs,
   getImgsByObjectId,
-  deleteImg,
+  deleteImgByImgId,
   updateImg,
 };
 

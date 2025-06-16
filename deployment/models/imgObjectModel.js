@@ -27,7 +27,7 @@ const getImagesByObjectId = async (objectId) => {
 };
 
 // ❌ Supprimer une image
-const deleteImage = async (id) => {
+const deleteImageByImgId = async (id) => {
   const query = `DELETE FROM image_object WHERE _id_imgobject = $1`;
   await db.query(query, [id]);
 };
@@ -52,7 +52,7 @@ module.exports = {
   insertImage,
   getAllImages,
   getImagesByObjectId,
-  deleteImage,
+  deleteImageByImgId,
   updateImage,
 };
 

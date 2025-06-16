@@ -5,7 +5,8 @@ const imgController = require('../controllers/imgObjectController');
 router.post('/', imgController.createImg);
 router.get('/', imgController.getAllImgs);
 router.get('/object/:objectId', imgController.getImgsByObjectId);
-router.delete('/:id', imgController.deleteImg);
+router.delete('/:id', imgController.deleteImgByImgId);
+router.delete('/object/:objectId', imgController.deleteByObjectId);
 router.put('/:id', imgController.updateImg);
 
 module.exports = router;
