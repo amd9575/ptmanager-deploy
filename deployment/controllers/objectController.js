@@ -40,14 +40,19 @@ const updateObject = async (req, res) => {
     const updated = await objectModel.updateObject(req.params.id, req.body);
     console.log("updateObject called with ID:", req.params.id);
 
-    // On renvoie l'objet mis à jour
-    res.status(200).json(updated);
+    if (!updated) {
+      return res.status(404).json({ error: "Objet non trouvé ou non mis à jour" });
+    }
+
+    // ✅ Renvoyer un JSON simple pour satisfaire Volley
+    res.status(200).json({ message: "Objet mis à jour avec succès" });
 
   } catch (error) {
     console.error("Erreur dans updateObject:", error);
-    res.status(400).json({ error: 'Erreur mise à jour' });
+    res.status(400).json({ error: "Erreur mise à jour" });
   }
 };
+
 
 
 // Supprimer un objet
