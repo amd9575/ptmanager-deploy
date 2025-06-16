@@ -41,6 +41,16 @@ const deleteImgByImgId = async (req, res) => {
   }
 };
 
+// ❌ Supprimer une image
+const deleteImgByObjectId = async (req, res) => {
+  try {
+    await ImgModel.deleteImageByObjectId(req.params.objectId);
+    res.json({ message: 'Image supprimée' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // 🔄 Mettre à jour une image
 const updateImg = async (req, res) => {
   try {
@@ -59,6 +69,7 @@ module.exports = {
   getAllImgs,
   getImgsByObjectId,
   deleteImgByImgId,
+  deleteImgByObjectId,
   updateImg,
 };
 
