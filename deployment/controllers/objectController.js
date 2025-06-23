@@ -69,64 +69,53 @@ const deleteObject = async (req, res) => {
 };
 
 // Objets filtrés
-const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
+const getObjectsFilteredByTime = async (req, res) => {
+  const {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound
+  } = req.query;
+
+  console.log('Requête filtrée reçue avec :', {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound
+  });
+
+   // -->
+   if (!objDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(objDate)) {
+     return res.status(400).json({ error: "Format de date invalide. Attendu: dd/MM/yyyy" });
+   }
+
+
+  // ✅ Correction ici — parser la date au bon format
+  const parseDateFr = (dateStr) => {
+    const [day, month, year] = dateStr.split('/');
+    return new Date(`${year}-${month}-${day}`);
+  };
+
+  const parsedDate = parseDateFr(objDate);
+
   try {
-    const delta = 5;
-    const [day, month, year] = objDate.split('/');
-    const date = new Date(`${year}-${month}-${day}`);
-
-    const fromDate = new Date(date);
-    fromDate.setDate(date.getDate() - delta);
-    const toDate = new Date(date);
-    toDate.setDate(date.getDate() + delta);
-
-    const fromStr = fromDate.toISOString().split('T')[0];
-    const toStr = toDate.toISOString().split('T')[0];
-
-    const query = `
-      SELECT * FROM object
-      WHERE _id_object != $1
-        AND object_type = $2
-        AND object_is_lost = $3
-        AND object_is_found = $4
-        AND object_is_actif = TRUE
-        AND object_date BETWEEN $5 AND $6
-    `;
-
-    const values = [
+    const result = await objectModel.getObjectsFilteredByTime(
       currentObjectId,
       objectType,
-      isLost,
-      isFound,
-      fromStr,
-      toStr
-    ];
+      parsedDate.toISOString().split('T')[0],
+      isLost === 'true',
+      isFound === 'true'
+    );
 
-    // LOG COMPLET
-    console.log("///////////////////////////////////////////////////////////");
-    console.log("Requête filtrée reçue avec :", {
-      currentObjectId,
-      objectType,
-      objDate,
-      isLost,
-      isFound
-    });
-    console.log(">>> Dates from-to :");
-    console.log("Filtrage avec dates :", { from: fromStr, to: toStr });
-    console.log("La requête de recherche d'objets similaires :");
-    console.log(query);
-    console.log("Query values:", values);
-
-    const result = await db.query(query, values);
-    console.log(`📦 ${result.rows.length} objets filtrés trouvés-------------------------`);
-    return result.rows;
-
-  } catch (err) {
-    console.error('Erreur dans getObjectsFilteredByTime (model):', err);
-    throw err;
+    console.log(`📬 ${result.length} objets envoyés au client`);
+    res.json(result);
+  } catch (error) {
+    console.error('getObjectsFilteredByTime error:', error);
+    res.status(500).json({ error: 'Erreur récupération objets filtrés' });
   }
 };
-
 
 
 const getSimilarObjects = async (req, res) => {
