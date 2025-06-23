@@ -86,7 +86,7 @@ const getObjectsFilteredByTime = async (req, res) => {
     isFound
   });
 
-   // -->
+   // check si la date est null ou mal formaté 
    if (!objDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(objDate)) {
      return res.status(400).json({ error: "Format de date invalide. Attendu: dd/MM/yyyy" });
    }

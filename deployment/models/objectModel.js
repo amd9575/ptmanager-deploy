@@ -130,17 +130,16 @@ const deleteObject = async (id) => {
 const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
   try {
     const delta = 5;
-    const date = new Date(objDate);
- console.log('>>> Dates from-to :');
+    const [day, month, year] = objDate.split('/');
+    const date = new Date(`${year}-${month}-${day}`);
+
     const fromDate = new Date(date);
     fromDate.setDate(date.getDate() - delta);
     const toDate = new Date(date);
     toDate.setDate(date.getDate() + delta);
 
-    console.log('Filtrage avec dates :', {
-      from: fromDate.toISOString().split('T')[0],
-      to: toDate.toISOString().split('T')[0],
-    });
+    const fromStr = fromDate.toISOString().split('T')[0];
+    const toStr = toDate.toISOString().split('T')[0];
 
     const query = `
       SELECT * FROM object
@@ -152,28 +151,39 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
         AND object_date BETWEEN $5 AND $6
     `;
 
-   console.log(`La requete de rechere d'objets similaires `, query);
-
     const values = [
       currentObjectId,
       objectType,
       isLost,
       isFound,
-      fromDate.toISOString().split('T')[0],
-      toDate.toISOString().split('T')[0]
+      fromStr,
+      toStr
     ];
 
-    console.log('Query values:', values);
+    // LOG COMPLET
+    console.log("///////////////////////////////////////////////////////////");
+    console.log("Requête filtrée reçue avec :", {
+      currentObjectId,
+      objectType,
+      objDate,
+      isLost,
+      isFound
+    });
+    console.log(">>> Dates from-to :");
+    console.log("Filtrage avec dates :", { from: fromStr, to: toStr });
+    console.log("La requête de recherche d'objets similaires :");
+    console.log(query);
+    console.log("Query values:", values);
 
     const result = await db.query(query, values);
     console.log(`📦 ${result.rows.length} objets filtrés trouvés-------------------------`);
     return result.rows;
+
   } catch (err) {
     console.error('Erreur dans getObjectsFilteredByTime (model):', err);
     throw err;
   }
 };
-
 const getObjectsByIds = async (ids) => {
   if (!ids || ids.length === 0) return [];
 
