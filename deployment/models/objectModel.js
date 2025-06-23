@@ -129,7 +129,7 @@ const deleteObject = async (id) => {
 // Objets filtrés temporellement
 const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
   try {
-    const delta = 5;
+    const delta = 30;
     const [day, month, year] = objDate.split('/');
     const date = new Date(`${year}-${month}-${day}`);
 
