@@ -48,7 +48,7 @@ const getAllObjects = async () => {
     const result = await db.query(query);
     const objects = result.rows;
 
-    console.log('------ jai ' + objects.length + ' objets');
+
 
     for (const obj of objects) {
       try {
@@ -152,6 +152,8 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
         AND object_date BETWEEN $5 AND $6
     `;
 
+   console.log(`La requete de rechere d'objets similaires `, query);
+
     const values = [
       currentObjectId,
       objectType,
@@ -164,6 +166,7 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
     console.log('Query values:', values);
 
     const result = await db.query(query, values);
+    console.log(`📦 ${result.rows.length} objets filtrés trouvés-------------------------`);
     return result.rows;
   } catch (err) {
     console.error('Erreur dans getObjectsFilteredByTime (model):', err);
@@ -192,7 +195,7 @@ const getObjectsByIds = async (ids) => {
 const getObjectsByUser = async (userId) => {
   const query = `SELECT * FROM object WHERE _id_user = $1 ORDER BY object_creat_date DESC`;
   const result = await db.query(query, [userId]);
-  console.log('-------------------------------Dans getObjectsByUser------------------------');
+  
   const objects = result.rows;
 
   for (const obj of objects) {

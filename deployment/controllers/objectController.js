@@ -38,7 +38,7 @@ const getObjectById = async (req, res) => {
 const updateObject = async (req, res) => {
   try {
     const updated = await objectModel.updateObject(req.params.id, req.body);
-    console.log("updateObject called with ID:", req.params.id);
+
 
     if (!updated) {
       return res.status(404).json({ error: "Objet non trouvé ou non mis à jour" });
@@ -94,6 +94,7 @@ const getObjectsFilteredByTime = async (req, res) => {
       isLost === 'true',
       isFound === 'true'
     );
+    console.log(`📬 ${result.length} objets envoyés au client`);
     res.json(result);
   } catch (error) {
     console.error('getObjectsFilteredByTime error:', error);
@@ -119,7 +120,7 @@ const getSimilarObjects = async (req, res) => {
 
 const getObjectsByUser = async (req, res) => {
   const userId = req.params.id;
-  console.log("==> getObjectsByUser appelé avec ID:", userId);
+
 
   try {
     const data = await objectModel.getObjectsByUser(userId);
