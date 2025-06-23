@@ -86,14 +86,29 @@ const getObjectsFilteredByTime = async (req, res) => {
     isFound
   });
 
+   // -->Si objDate est vide ou mal formée
+   if (!objDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(objDate)) {
+     return res.status(400).json({ error: "Format de date invalide. Attendu: dd/MM/yyyy" });
+   }
+
+
+  // ✅ Correction ici — parser la date au bon format
+  const parseDateFr = (dateStr) => {
+    const [day, month, year] = dateStr.split('/');
+    return new Date(`${year}-${month}-${day}`);
+  };
+
+  const parsedDate = parseDateFr(objDate);
+
   try {
     const result = await objectModel.getObjectsFilteredByTime(
       currentObjectId,
       objectType,
-      objDate,
+      parsedDate.toISOString().split('T')[0],
       isLost === 'true',
       isFound === 'true'
     );
+
     console.log(`📬 ${result.length} objets envoyés au client`);
     res.json(result);
   } catch (error) {
@@ -101,6 +116,7 @@ const getObjectsFilteredByTime = async (req, res) => {
     res.status(500).json({ error: 'Erreur récupération objets filtrés' });
   }
 };
+
 
 const getSimilarObjects = async (req, res) => {
   const { objectIds } = req.body;
