@@ -214,6 +214,30 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+//recuperation name, email d'un utilisateur bien definit avec son ID 
+
+const getUserParamsById = async (req, res) => {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+        return res.status(400).json({ error: 'ID utilisateur invalide' });
+    }
+
+    try {
+        const user = await userModel.getUserParamsById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        }
+
+        res.json(user); // → { id, name, email }
+    } catch (err) {
+        console.error('Erreur dans getUserParamsById:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+};
+
+
 module.exports = { 
    loginUser,
    updateDeviceToken,
@@ -226,4 +250,5 @@ module.exports = {
    updateUser,
    deleteUser,
    getAllUsers,
+   getUserParamsById,
 };

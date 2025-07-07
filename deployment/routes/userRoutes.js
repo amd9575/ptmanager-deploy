@@ -6,13 +6,14 @@ router.post('/login', userController.loginUser);
 router.post('/update-device-token', userController.updateDeviceToken);
 router.post('/create', userController.createUser);
 router.post('/register', userController.registerUser);
-router.get('/exists/:email', userController.checkIfUserExists);
 router.post('/reset-password', userController.resetPassword);
 router.post('/objects-info', userController.getUserObjectDetails);
-router.get('/device-token/:id', userController.getDeviceToken);
+
 router.put('/update/:id', userController.updateUser);
 router.delete('/delete/:id', userController.deleteUser);
-
+router.get('/exists/:email', userController.checkIfUserExists);
+router.get('/device-token/:id', userController.getDeviceToken);
+router.get('/:id', userController.getUserById);
 
 
 router.get('/ping', (req, res) => {
