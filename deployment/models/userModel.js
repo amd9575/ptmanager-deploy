@@ -151,7 +151,7 @@ async function getAllUsers() {
 
 async function getUserParamsById(id) {
   const result = await db.query(
-    'SELECT _id_user, user_fname, user_email FROM users WHERE _id_user = $1',
+    'SELECT _id_user, f_name, email FROM users WHERE _id_user = $1',
     [id]
   );
   return result.rows[0] || null;
