@@ -22,6 +22,9 @@ app.use('/api/imgs', imgRoutes);
 const notificationRoute = require('./routes/notificationRoute');
 app.use('/api/notifications', notificationRoute);
 
+const emailRoutes = require('./routes/emailRoutes');
+app.use('/api/send-email', emailRoutes);
+
 app.get('/', (req, res) => {
   res.send('API PTManager opérationnelle');
 });
