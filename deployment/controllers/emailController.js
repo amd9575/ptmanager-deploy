@@ -26,6 +26,25 @@ const sendEmail = async (req, res) => {
             text: body,
         });
 
+      // 🔔 Envoi notification après mail
+        const token = await notificationModel.getDeviceToken(userId);
+        if (token) {
+            const notifMessage = subject === "Objet trouvé"
+                ? "Quelqu’un pense que vous avez trouvé son objet."
+                : "L'objet que vous avez trouvé vient d’être déclaré perdu.";
+
+            await sendFirebaseNotification(token, subject, notifMessage);
+
+            // Enregistre la notif en base si besoin :
+            await notificationModel.insertNotification({
+                userId,
+                email: to,
+                message: notifMessage,
+                objectId,
+                isManaged: true,
+            });
+        }
+
         res.status(200).json({ success: true });
     } catch (error) {
         console.error('Erreur envoi email:', error);
