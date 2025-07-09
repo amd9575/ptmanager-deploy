@@ -22,6 +22,7 @@ const getDeviceToken = async (userId) => {
 };
 
 module.exports = { 
-  insertNotification, 
+   insertNotification, 
+   getDeviceToken,
 };
 

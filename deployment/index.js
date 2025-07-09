@@ -19,7 +19,7 @@ app.use('/api/objects', objectRoutes);
 const imgRoutes = require('./routes/imgObjectRoutes');
 app.use('/api/imgs', imgRoutes);
 
-const notificationRoute = require('./routes/notificationRoute');
+const notificationRoute = require('./routes/notificationRoutes');
 app.use('/api/notifications', notificationRoute);
 
 const emailRoutes = require('./routes/emailRoutes');

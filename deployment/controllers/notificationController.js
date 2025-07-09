@@ -4,7 +4,7 @@ const { sendFirebaseNotification } = require('../services/firebaseService');
 // tu peux aussi importer un module externe pour envoyer la notif (ex. Firebase)
 
 
-const sendNotification = async (req, res) => {
+const notifyUser = async (req, res) => {
   const { userId, userEmail, objectId, message } = req.body;
 
   try {
@@ -55,6 +55,6 @@ const createNotification = async (req, res) => {
 
 module.exports = { 
    createNotification,
-   sendNotification,
+   notifyUser,
 };
 
