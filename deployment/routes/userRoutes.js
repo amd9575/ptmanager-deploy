@@ -13,7 +13,7 @@ router.put('/update/:id', userController.updateUser);
 router.delete('/delete/:id', userController.deleteUser);
 router.get('/exists/:email', userController.checkIfUserExists);
 router.get('/device-token/:id', userController.getDeviceToken);
-router.get(':id', userController.getUserParamsById); // recup email
+router.get('/:id', userController.getUserParamsById); // recup email
 
 
 
