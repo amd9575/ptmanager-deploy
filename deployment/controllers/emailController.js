@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (req, res) => {
-    const { to, subject, body } = req.body;
+    const { to, cc, subject, body } = req.body;
 
     if (!to || !subject || !body) {
         return res.status(400).json({ error: 'Champs requis manquants.' });
@@ -21,6 +21,7 @@ const sendEmail = async (req, res) => {
         await transporter.sendMail({
             from: process.env.EMAIL_SENDER,
             to,
+            cc,  // Envoie en copie
             subject,
             text: body,
         });
@@ -31,6 +32,7 @@ const sendEmail = async (req, res) => {
         res.status(500).json({ error: 'Échec de l’envoi du mail.' });
     }
 };
+
 
 module.exports = {
     sendEmail
