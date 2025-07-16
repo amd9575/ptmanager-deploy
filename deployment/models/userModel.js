@@ -1,7 +1,6 @@
 const db = require('../db');
 
 
-
 const updateLastConnexion = async (userId) => {
   const query = `
     UPDATE users SET date_connexion = NOW()
@@ -156,8 +155,6 @@ async function getUserParamsById(id) {
   );
   return result.rows[0] || null;
 }
-
-
 
 
 module.exports = {

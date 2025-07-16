@@ -2,8 +2,21 @@ const express = require('express');
 const db = require('./db');
 require('dotenv').config();
 
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ✅ Gérer la variable d’environnement pour le service account
+if (process.env.SERVICE_ACCOUNT_BASE64) {
+  const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
+  const tempPath = path.join(__dirname, 'service-account.json');
+
+  fs.writeFileSync(tempPath, decoded, { encoding: 'utf8' });
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = tempPath;
+}
+
 
 const userRoutes = require('./routes/userRoutes');
 
@@ -24,6 +37,9 @@ app.use('/api/notifications', notificationRoute);
 
 const emailRoutes = require('./routes/emailRoutes');
 app.use('/api/send-email', emailRoutes);
+
+const visionRoutes = require('./routes/visionRoutes');
+app.use('/api/vision', visionRoutes); // 🔥 Ajouté ici
 
 app.get('/', (req, res) => {
   res.send('API PTManager opérationnelle');
