@@ -8,6 +8,7 @@ const analyzeImage = async (req, res) => {
   if (!imageBase64) {
     return res.status(400).json({ error: 'Image base64 requise.' });
   }
+   console.log('Path vers les credentials :', process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
   try {
     const [labelResult] = await client.labelDetection({
