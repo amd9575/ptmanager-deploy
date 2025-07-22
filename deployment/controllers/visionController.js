@@ -1,52 +1,53 @@
 const vision = require('@google-cloud/vision');
 const { Translate } = require('@google-cloud/translate').v2;
-const sharp = require('sharp');
-
-const client = new vision.ImageAnnotatorClient();
 const translate = new Translate();
+const client = new vision.ImageAnnotatorClient();
 
+// --- Utilitaires de conversion ---
 function toHex(component) {
   const hex = (component || 0).toString(16).toUpperCase();
   return hex.length === 1 ? '0' + hex : hex;
 }
 
+// --- Vocabulaire trop générique à filtrer ---
+const genericTerms = [
+  "objet", "chose", "élément", "accessoire", "truc", "matériau",
+  "surface", "fond", "conception", "modèle", "outil", "composant"
+];
+
+function isTooGeneric(term) {
+  return genericTerms.includes(term.toLowerCase());
+}
+
+// --- Traduction via Google Translate API ---
 async function translateToFrench(text) {
   try {
     const [translated] = await translate.translate(text, 'fr');
     return translated;
   } catch (error) {
     console.error("Erreur de traduction :", error.message);
-    return text; // fallback si erreur
+    return text; // fallback en cas d’erreur
   }
 }
 
-async function cropToMainObject(base64Image) {
-  const [cropResult] = await client.cropHints({
-    image: { content: base64Image }
-  });
+// --- Extraction et filtrage intelligent des labels ---
+async function extractRelevantTranslatedLabels(labelAnnotations, max = 3) {
+  const sorted = labelAnnotations
+    .sort((a, b) => b.score - a.score)
+    .map(label => ({ description: label.description, score: label.score }));
 
-  const hints = cropResult.cropHintsAnnotation?.cropHints;
-  if (!hints || hints.length === 0) return base64Image;
-
-  const bounds = hints[0].boundingPoly.vertices;
-  const [x, y, x2, y2] = [
-    bounds[0].x || 0,
-    bounds[0].y || 0,
-    bounds[2].x || 0,
-    bounds[2].y || 0
-  ];
-  const width = x2 - x;
-  const height = y2 - y;
-
-  const imageBuffer = Buffer.from(base64Image, "base64");
-
-  const croppedBuffer = await sharp(imageBuffer)
-    .extract({ left: x, top: y, width, height })
-    .toBuffer();
-
-  return croppedBuffer.toString("base64");
+  const filtered = [];
+  for (let i = 0; i < sorted.length && filtered.length < max; i++) {
+    const current = sorted[i];
+    if (filtered.length === 0 || !isTooGeneric(current.description)) {
+      const translated = await translateToFrench(current.description);
+      filtered.push(translated);
+    }
+  }
+  return filtered;
 }
 
+// --- Contrôleur principal ---
 const analyzeImage = async (req, res) => {
   const { imageBase64 } = req.body;
 
@@ -57,33 +58,18 @@ const analyzeImage = async (req, res) => {
   console.log('Path vers les credentials :', process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
   try {
-    // 📸 Rogner l’image pour isoler l’objet principal
-    const croppedBase64 = await cropToMainObject(imageBase64);
+    const [labelResult] = await client.labelDetection({ image: { content: imageBase64 } });
+    const [colorResult] = await client.imageProperties({ image: { content: imageBase64 } });
 
-    // 🧠 Détection des objets
-    const [labelResult] = await client.labelDetection({ image: { content: croppedBase64 } });
-    const labels = labelResult.labelAnnotations
-      .slice(0, 3) // Limite à 3 labels max
-      .map(label => label.description);
+    const objets = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
 
-//    const translatedLabels = await Promise.all(labels.map(translateToFrench));
-   const labels = await Promise.all(labelResult.labelAnnotations
-    .slice(0, 2) // Limite à 2 objets max
-    .map(label => translateToFrench(label.description))
-   );
-
-
-    // 🎨 Couleurs dominantes
-    const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
     const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
-
-    const colors = colorsRaw.slice(0, 3).map(color => {
+    const couleurs = colorsRaw.slice(0, 3).map(color => {
       const rgb = color.color;
       return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
     });
 
-    res.json({ objets: translatedLabels, couleurs: colors });
-
+    res.json({ objets, couleurs });
   } catch (err) {
     console.error('Erreur analyse Vision:', err);
     res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
@@ -92,6 +78,6 @@ const analyzeImage = async (req, res) => {
 
 module.exports = {
   analyzeImage,
-  translateToFrench
+  translateToFrench,
 };
 
