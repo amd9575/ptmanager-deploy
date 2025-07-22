@@ -24,6 +24,7 @@ const initDbRoute = require('./routes/initDbRoute');
 app.use('/init-db', initDbRoute);
 
 app.use(express.json());
+//app.use(express.json({ limit: '10mb' }));
 app.use('/api/users', userRoutes);
 
 const objectRoutes = require('./routes/objectRoutes');
