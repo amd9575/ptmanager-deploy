@@ -66,7 +66,12 @@ const analyzeImage = async (req, res) => {
       .slice(0, 3) // Limite à 3 labels max
       .map(label => label.description);
 
-    const translatedLabels = await Promise.all(labels.map(translateToFrench));
+//    const translatedLabels = await Promise.all(labels.map(translateToFrench));
+   const labels = await Promise.all(labelResult.labelAnnotations
+    .slice(0, 2) // Limite à 2 objets max
+    .map(label => translateToFrench(label.description))
+   );
+
 
     // 🎨 Couleurs dominantes
     const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
