@@ -31,7 +31,7 @@ async function translateToFrench(text) {
 }
 
 // --- Extraction et filtrage intelligent des labels ---
-async function extractRelevantTranslatedLabels(labelAnnotations, max = 3) {
+async function extractRelevantTranslatedLabels__pasutilisé(labelAnnotations, max = 3) {
   // 1. Filtrer ceux qui ont un score raisonnable (ex: > 0.6)
   const filteredByScore = labelAnnotations
     .filter(label => label.score >= 0.6)
@@ -59,6 +59,33 @@ async function extractRelevantTranslatedLabels(labelAnnotations, max = 3) {
 
   return results;
 }
+
+// --- Extraction et filtrage intelligent des labels ---
+async function extractRelevantTranslatedLabels(labelAnnotations, max = 1) {
+  // 1. Trier par score décroissant
+  const sortedByScore = labelAnnotations
+    .filter(label => label.score >= 0.6)
+    .sort((a, b) => b.score - a.score);
+
+  for (const label of sortedByScore) {
+    const isGeneric = isTooGeneric(label.description);
+    const translated = await translateToFrench(label.description);
+
+    // 2. Garder uniquement s'il est pertinent après traduction
+    if (!isGeneric && !isTooGeneric(translated)) {
+      return [translated]; // ✅ retourne immédiatement le plus pertinent
+    }
+  }
+
+  // 3. Fallback si rien de pertinent trouvé
+  if (labelAnnotations.length > 0) {
+    const fallbackTranslated = await translateToFrench(labelAnnotations[0].description);
+    return [fallbackTranslated];
+  }
+
+  return []; // Aucun label dispo
+}
+
 
 // --- Contrôleur principal ---
 const analyzeImage = async (req, res) => {
