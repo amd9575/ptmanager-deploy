@@ -32,19 +32,32 @@ async function translateToFrench(text) {
 
 // --- Extraction et filtrage intelligent des labels ---
 async function extractRelevantTranslatedLabels(labelAnnotations, max = 3) {
-  const sorted = labelAnnotations
-    .sort((a, b) => b.score - a.score)
-    .map(label => ({ description: label.description, score: label.score }));
+  // 1. Filtrer ceux qui ont un score raisonnable (ex: > 0.6)
+  const filteredByScore = labelAnnotations
+    .filter(label => label.score >= 0.6)
+    .sort((a, b) => b.score - a.score);
 
-  const filtered = [];
-  for (let i = 0; i < sorted.length && filtered.length < max; i++) {
-    const current = sorted[i];
-    if (filtered.length === 0 || !isTooGeneric(current.description)) {
-      const translated = await translateToFrench(current.description);
-      filtered.push(translated);
+  const results = [];
+
+  for (const label of filteredByScore) {
+    if (results.length >= max) break;
+
+    const isGeneric = isTooGeneric(label.description);
+    const translated = await translateToFrench(label.description);
+
+    // 2. Vérifie que la traduction n’est pas trop générique non plus
+    if (!isGeneric && !isTooGeneric(translated)) {
+      results.push(translated);
     }
   }
-  return filtered;
+
+  // 3. Fallback : si aucun résultat pertinent, prendre le top label (même générique)
+  if (results.length === 0 && labelAnnotations.length > 0) {
+    const fallbackTranslated = await translateToFrench(labelAnnotations[0].description);
+    results.push(fallbackTranslated);
+  }
+
+  return results;
 }
 
 // --- Contrôleur principal ---
