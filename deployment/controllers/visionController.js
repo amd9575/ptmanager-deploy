@@ -4,6 +4,9 @@ const sharp = require('sharp');
 const { Translate } = require('@google-cloud/translate').v2;
 const translate = new Translate();
 const client = new vision.ImageAnnotatorClient();
+//Liste des objets pour lequels on doit detecter la couleur
+const clothesObjects = ['vêtement', 'robe', 'pantalon', 'chaussure', 'sac', 't-shirt', 'pull', 'chemise', 'pantalon'];
+const luggageObjects = ['valise', 'bagage', 'sac de voyage', 'sac à dos'];
 
 // --- Utilitaires de conversion ---
 function toHex(component) {
@@ -120,6 +123,9 @@ async function detectObjectsWithLocalization(imageBase64) {
     throw error;
   }
 }
+function appartientCategorie(objet, categorieList) {
+  return categorieList.includes(objet.toLowerCase());
+}
 
 const analyzeImage = async (req, res) => {
   const { imageBase64 } = req.body;
@@ -131,48 +137,52 @@ const analyzeImage = async (req, res) => {
   try {
     const imageBuffer = Buffer.from(imageBase64, 'base64');
 
-    // Appel pour localiser les objets dans l'image entière
+    // Localiser objets
     const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
-
     const localizedObjects = localizationResult.localizedObjectAnnotations;
 
     if (localizedObjects.length === 0) {
       return res.status(404).json({ error: 'Aucun objet détecté.' });
     }
 
-    // On prend le premier objet détecté (ou max 3 si vous voulez)
+    // Premier objet détecté
     const mainObject = localizedObjects[0];
-
     const translatedName = await translateToFrench(mainObject.name);
 
     if (isTooGeneric(translatedName)) {
-      // Si trop générique, on met le nom d'origine (anglais)
       console.warn(`Nom trop générique détecté: ${translatedName}`);
     }
 
-    // Découper la zone de l'objet détecté
-    const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
+    // Décider d'afficher la couleur selon la catégorie
+    const afficherCouleur = clothesObjects.includes(translatedName.toLowerCase()) ||
+                           luggageObjects.includes(translatedName.toLowerCase());
 
-    // Convertir en base64 pour analyse couleur par Google Vision
-    const croppedBase64 = croppedImageBuffer.toString('base64');
+    let couleurs = [];
 
-    // Analyser les couleurs dominantes sur la zone découpée
-    const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
+    if (afficherCouleur) {
+      // Découper image autour de l'objet
+      const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
+      const croppedBase64 = croppedImageBuffer.toString('base64');
 
-    const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+      // Analyser couleurs sur zone recadrée
+      const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
+      const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
 
-    // Extraire la 1 couleur dominantes max en hex c'ets le second parametre de slice qui indique lke nombre de couleurs souhaité
-    const couleurs = colorsRaw.slice(0, 1).map(color => {
-      const rgb = color.color;
-      return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
-    });
+      // Garder la couleur dominante uniquement
+      couleurs = colorsRaw.slice(0, 1).map(color => {
+        const rgb = color.color;
+        return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+      });
+    }
 
+    // Envoyer la réponse
     res.json({
       objets: [translatedName],
       couleurs
     });
+
   } catch (err) {
-     if (err.code === 7) {
+    if (err.code === 7) {
       console.error('PERMISSION_DENIED : accès API refusé.', err);
       return res.status(403).json({ error: 'Accès API refusé. Veuillez vérifier vos droits.' });
     } else if (err.code === 8 || err.code === 429) {
