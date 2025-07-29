@@ -60,8 +60,34 @@ async function extractRelevantTranslatedLabels(labelAnnotations, max = 3) {
   return results;
 }
 
+//Detection de l'objet dans l'image en utilisant la spacialisation. plus précis que la labellisation 
+async function detectObjectsWithLocalization(imageBase64) {
+  try {
+    // Appel à objectLocalization avec l'image en base64
+    const [result] = await client.objectLocalization({ image: { content: imageBase64 } });
+    const objects = result.localizedObjectAnnotations;
 
-// --- Contrôleur principal ---
+    // Parcours des objets détectés
+    objects.forEach(object => {
+      console.log(`Objet détecté : ${object.name}`);
+      console.log(`Confiance : ${object.score}`);
+
+      // Coordonnées normalisées de la boîte englobante
+      console.log('Bounding box :');
+      object.boundingPoly.normalizedVertices.forEach((v, i) =>
+        console.log(`  Point ${i + 1}: (x=${v.x}, y=${v.y})`)
+      );
+    });
+
+    return objects;
+
+  } catch (error) {
+    console.error('Erreur objectLocalization:', error);
+    throw error;
+  }
+}
+
+// --- Contrôleur principal utilisant labelDetection---
 const analyzeImage = async (req, res) => {
   const { imageBase64 } = req.body;
 
@@ -72,10 +98,26 @@ const analyzeImage = async (req, res) => {
   console.log('Path vers les credentials :', process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
   try {
-    const [labelResult] = await client.labelDetection({ image: { content: imageBase64 } });
+//const [labelResult] = await client.labelDetection({ image: { content: imageBase64 } });
+    const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
     const [colorResult] = await client.imageProperties({ image: { content: imageBase64 } });
 
-    const objets = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
+// const objets = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
+
+   // Ici on récupère les objets détectés
+    const localizedObjects = localizationResult.localizedObjectAnnotations;
+
+    // Traduction et filtrage identiques à votre fonction extractRelevantTranslatedLabels,
+    // mais adaptée à partir de localizedObjects[].name
+    const objets = [];
+    for (const obj of localizedObjects) {
+      const nomTraduit = await translateToFrench(obj.name);
+      if (!isTooGeneric(nomTraduit)) {
+        objets.push(nomTraduit);
+      }
+      if (objets.length >= 3) break; // Limite max 3 objets
+    }
+
 
     const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
     const couleurs = colorsRaw.slice(0, 3).map(color => {
