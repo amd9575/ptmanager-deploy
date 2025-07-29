@@ -161,8 +161,8 @@ const analyzeImage = async (req, res) => {
 
     const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
 
-    // Extraire les 3 couleurs dominantes max en hex
-    const couleurs = colorsRaw.slice(0, 3).map(color => {
+    // Extraire la 1 couleur dominantes max en hex c'ets le second parametre de slice qui indique lke nombre de couleurs souhaité
+    const couleurs = colorsRaw.slice(0, 1).map(color => {
       const rgb = color.color;
       return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
     });
