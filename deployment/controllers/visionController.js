@@ -1,4 +1,6 @@
 const vision = require('@google-cloud/vision');
+const sharp = require('sharp');
+
 const { Translate } = require('@google-cloud/translate').v2;
 const translate = new Translate();
 const client = new vision.ImageAnnotatorClient();
@@ -29,6 +31,38 @@ async function translateToFrench(text) {
     return text; // fallback en cas d’erreur
   }
 }
+
+// Fonction pour découper l'image selon une bounding box normalisée
+async function cropImageFromBoundingBox(imageBuffer, boundingPoly) {
+  // boundingPoly.normalizedVertices = [{x, y}, ...] avec x,y entre 0 et 1
+
+  // Calcule les min/max des coordonnées
+  const xs = boundingPoly.normalizedVertices.map(v => v.x);
+  const ys = boundingPoly.normalizedVertices.map(v => v.y);
+  const xMin = Math.min(...xs);
+  const xMax = Math.max(...xs);
+  const yMin = Math.min(...ys);
+  const yMax = Math.max(...ys);
+
+  // Charger l’image avec sharp pour obtenir ses dimensions exactes
+  const metadata = await sharp(imageBuffer).metadata();
+  const width = metadata.width;
+  const height = metadata.height;
+
+  // Calcul coordonnées en pixels
+  const left = Math.round(xMin * width);
+  const top = Math.round(yMin * height);
+  const cropWidth = Math.round((xMax - xMin) * width);
+  const cropHeight = Math.round((yMax - yMin) * height);
+
+  // Découper l’image
+  const croppedBuffer = await sharp(imageBuffer)
+    .extract({ left, top, width: cropWidth, height: cropHeight })
+    .toBuffer();
+
+  return croppedBuffer;
+}
+
 
 // --- Extraction et filtrage intelligent des labels ---
 async function extractRelevantTranslatedLabels(labelAnnotations, max = 3) {
@@ -87,7 +121,6 @@ async function detectObjectsWithLocalization(imageBase64) {
   }
 }
 
-// --- Contrôleur principal utilisant labelDetection---
 const analyzeImage = async (req, res) => {
   const { imageBase64 } = req.body;
 
@@ -95,42 +128,108 @@ const analyzeImage = async (req, res) => {
     return res.status(400).json({ error: 'Image base64 requise.' });
   }
 
-  console.log('Path vers les credentials :', process.env.GOOGLE_APPLICATION_CREDENTIALS);
-
   try {
-//const [labelResult] = await client.labelDetection({ image: { content: imageBase64 } });
+    const imageBuffer = Buffer.from(imageBase64, 'base64');
+
+    // Appel pour localiser les objets dans l'image entière
     const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
-    const [colorResult] = await client.imageProperties({ image: { content: imageBase64 } });
 
-// const objets = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
-
-   // Ici on récupère les objets détectés
     const localizedObjects = localizationResult.localizedObjectAnnotations;
 
-    // Traduction et filtrage identiques à votre fonction extractRelevantTranslatedLabels,
-    // mais adaptée à partir de localizedObjects[].name
-    const objets = [];
-    for (const obj of localizedObjects) {
-      const nomTraduit = await translateToFrench(obj.name);
-      if (!isTooGeneric(nomTraduit)) {
-        objets.push(nomTraduit);
-      }
-      if (objets.length >= 3) break; // Limite max 3 objets
+    if (localizedObjects.length === 0) {
+      return res.status(404).json({ error: 'Aucun objet détecté.' });
     }
 
+    // On prend le premier objet détecté (ou max 3 si vous voulez)
+    const mainObject = localizedObjects[0];
+
+    const translatedName = await translateToFrench(mainObject.name);
+
+    if (isTooGeneric(translatedName)) {
+      // Si trop générique, on met le nom d'origine (anglais)
+      console.warn(`Nom trop générique détecté: ${translatedName}`);
+    }
+
+    // Découper la zone de l'objet détecté
+    const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
+
+    // Convertir en base64 pour analyse couleur par Google Vision
+    const croppedBase64 = croppedImageBuffer.toString('base64');
+
+    // Analyser les couleurs dominantes sur la zone découpée
+    const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
 
     const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+
+    // Extraire les 3 couleurs dominantes max en hex
     const couleurs = colorsRaw.slice(0, 3).map(color => {
       const rgb = color.color;
       return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
     });
 
-    res.json({ objets, couleurs });
+    res.json({
+      objets: [translatedName],
+      couleurs
+    });
   } catch (err) {
-    console.error('Erreur analyse Vision:', err);
-    res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
+     if (err.code === 7) {
+      console.error('PERMISSION_DENIED : accès API refusé.', err);
+      return res.status(403).json({ error: 'Accès API refusé. Veuillez vérifier vos droits.' });
+    } else if (err.code === 8 || err.code === 429) {
+      console.error('RESOURCE_EXHAUSTED ou trop de requêtes : quota API épuisé.', err);
+      return res.status(429).json({ error: 'Quota API épuisé. Réessayez plus tard.' });
+    } else {
+      console.error('Erreur serveur durant l’analyse Vision:', err);
+      return res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
+    }
   }
 };
+
+// --- Contrôleur principal utilisant labelDetection---
+
+//const analyzeImage = async (req, res) => {
+//  const { imageBase64 } = req.body;
+
+//  if (!imageBase64) {
+//    return res.status(400).json({ error: 'Image base64 requise.' });
+//  }
+
+//  console.log('Path vers les credentials :', process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
+//  try {
+////const [labelResult] = await client.labelDetection({ image: { content: imageBase64 } });
+//    const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
+//    const [colorResult] = await client.imageProperties({ image: { content: imageBase64 } });
+
+//// const objets = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
+
+   // Ici on récupère les objets détectés
+//    const localizedObjects = localizationResult.localizedObjectAnnotations;
+
+    // Traduction et filtrage identiques à votre fonction extractRelevantTranslatedLabels,
+    // mais adaptée à partir de localizedObjects[].name
+//    const objets = [];
+//    for (const obj of localizedObjects) {
+//      const nomTraduit = await translateToFrench(obj.name);
+//      if (!isTooGeneric(nomTraduit)) {
+//        objets.push(nomTraduit);
+//      }
+//      if (objets.length >= 3) break; // Limite max 3 objets
+//    }
+
+
+//    const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+//    const couleurs = colorsRaw.slice(0, 3).map(color => {
+//      const rgb = color.color;
+//      return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+//    });
+
+//    res.json({ objets, couleurs });
+//  } catch (err) {
+//    console.error('Erreur analyse Vision:', err);
+//    res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
+//  }
+//};
 
 module.exports = {
   analyzeImage,
