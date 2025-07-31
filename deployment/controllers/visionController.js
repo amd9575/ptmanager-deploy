@@ -159,9 +159,28 @@ console.log('Résultat localisation obtenu');
 
       const localizedObjects = localizationResult.localizedObjectAnnotations;
 
-       if (localizedObjects.length === 0) {
-         return res.status(404).json({ error: 'Aucun objet détecté.' });
-       }
+//if (localizedObjects.length === 0) {
+//   return res.status(404).json({ error: 'Aucun objet détecté.' });
+//}
+
+      // 🛑 Fallback si aucun objet localisé (ex : clés non reconnues)
+      if (!localizedObjects.length) {
+         console.warn("Aucun objet localisé, fallback sur labelDetection");
+
+         const [labelResult] = await client.labelDetection({ image: { content: imageBuffer } });
+         const labelNames = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
+         const objets = regrouperObjets(labelNames);
+
+         const [colorResult] = await client.imageProperties({ image: { content: imageBuffer } });
+         const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+
+         const couleurs = colorsRaw.slice(0, 1).map(color => {
+         const rgb = color.color;
+         return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+        });
+
+        return res.json({ objets, couleurs });
+      }
 
     // Premier objet détecté
 //    const mainObject = localizedObjects[0];
