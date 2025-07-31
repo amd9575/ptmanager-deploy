@@ -131,7 +131,7 @@ const analyzeImage = async (req, res) => {
   const { imageBase64 } = req.body;
 
   if (!imageBase64) {
-    return res.status(400).json({ error: 'Image base64 requise.' });
+    return res.status(400).json({ error: 'Le fomat de l\'image est incorrect. Foormat de l\'image base64 requise.' });
   }
 
   try {
