@@ -140,112 +140,98 @@ function appartientCategorie(objet, categorieList) {
   return categorieList.includes(objet.toLowerCase());
 }
 
+
 const analyzeImage = async (req, res) => {
   const { imageBase64 } = req.body;
 
   if (!imageBase64) {
-    return res.status(400).json({ error: 'Le fomat de l\'image est incorrect. Foormat de l\'image base64 requise.' });
+    return res.status(400).json({ error: 'Format incorrect : image base64 requise.' });
   }
 
   try {
-      console.log('Début analyse image');
-      const imageBuffer = Buffer.from(imageBase64, 'base64');
+    console.log('Début analyse image');
+    const imageBuffer = Buffer.from(imageBase64, 'base64');
 
-    // Localiser objets
-//const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
-      const [localizationResult] = await client.objectLocalization({ image: { content: imageBuffer } });
+    // 🔍 Tentative avec objectLocalization
+    const [localizationResult] = await client.objectLocalization({ image: { content: imageBuffer } });
+    const localizedObjects = localizationResult.localizedObjectAnnotations;
 
-console.log('Résultat localisation obtenu');
+    // 🔁 Fallback si aucun objet détecté
+    if (!localizedObjects.length) {
+      console.warn("Aucun objet localisé, fallback sur labelDetection");
 
-      const localizedObjects = localizationResult.localizedObjectAnnotations;
+      const [labelResult] = await client.labelDetection({ image: { content: imageBuffer } });
+      const labelNames = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
+      const objets = regrouperObjets(labelNames);
 
-//if (localizedObjects.length === 0) {
-//   return res.status(404).json({ error: 'Aucun objet détecté.' });
-//}
+      const [colorResult] = await client.imageProperties({ image: { content: imageBuffer } });
+      const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
 
-      // 🛑 Fallback si aucun objet localisé (ex : clés non reconnues)
-      if (!localizedObjects.length) {
-         console.warn("Aucun objet localisé, fallback sur labelDetection");
+      const couleurs = colorsRaw.slice(0, 1).map(color => {
+        const rgb = color.color;
+        return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+      });
 
-         const [labelResult] = await client.labelDetection({ image: { content: imageBuffer } });
-         const labelNames = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
-         const objets = regrouperObjets(labelNames);
-
-         const [colorResult] = await client.imageProperties({ image: { content: imageBuffer } });
-         const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
-
-         const couleurs = colorsRaw.slice(0, 1).map(color => {
-         const rgb = color.color;
-         return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
-        });
-
-        return res.json({ objets, couleurs });
-      }
-
-    // Premier objet détecté
-//    const mainObject = localizedObjects[0];
-      const translatedNames = [];
-      for (const obj of localizedObjects) {
-        const name = await translateToFrench(obj.name);
-        if (!isTooGeneric(name)) {
-          translatedNames.push(name);
-        }
-      }
-const objets = regrouperObjets(translatedNames);
-
-console.log('Objet principal détecté:', mainObject.name);
-
-    const translatedName = await translateToFrench(mainObject.name);
-
-console.log('Nom traduit:', translatedName);
-
-    if (isTooGeneric(translatedName)) {
-      console.warn(`Nom trop générique détecté: ${translatedName}`);
+      return res.json({ objets, couleurs });
     }
 
-    // Décider d'afficher la couleur selon la catégorie
+    // ✅ Objet détecté avec bounding box
+    const mainObject = localizedObjects[0];
+    if (!mainObject || !mainObject.boundingPoly?.normalizedVertices) {
+      console.warn("Objet principal invalide ou boundingPoly manquant.");
+      return res.status(422).json({ error: "Objet mal détecté, image non exploitable." });
+    }
+
+    // Traduction + regroupement
+    const translatedNames = [];
+    for (const obj of localizedObjects) {
+      const name = await translateToFrench(obj.name);
+      if (!isTooGeneric(name)) {
+        translatedNames.push(name);
+      }
+    }
+
+    const objets = regrouperObjets(translatedNames);
+    const translatedName = translatedNames[0] || "inconnu";
+
+    console.log('Objet principal détecté:', mainObject.name);
+    console.log('Nom traduit:', translatedName);
+
     const afficherCouleur = clothesObjects.includes(translatedName.toLowerCase()) ||
-                           luggageObjects.includes(translatedName.toLowerCase());
+                            luggageObjects.includes(translatedName.toLowerCase());
 
     let couleurs = [];
 
     if (!afficherCouleur) {
-      // Renvoi explicite en cas d'objet non pris en charge
-        return res.json({
-          objets: [translatedName || "inconnu"],
-          couleurs: []
-        });
-    }
-    else{
-      // Découper image autour de l'objet
-      const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
-//const croppedBase64 = croppedImageBuffer.toString('base64');
-
-      // Analyser couleurs sur zone recadrée
-//const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
-      const [colorResult] = await client.imageProperties({ image: { content: croppedImageBuffer } });
-      const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
-
-      // Garder la couleur dominante uniquement
-      couleurs = colorsRaw.slice(0, 1).map(color => {
-        const rgb = color.color;
-        return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+      return res.json({
+        objets,
+        couleurs: []
       });
     }
 
-    // Envoyer la réponse
-    res.json({
-      objets: [translatedName],
+    // 🎯 Recadrage et détection couleur
+    const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
+    const [colorResult] = await client.imageProperties({ image: { content: croppedImageBuffer } });
+
+    const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+    couleurs = colorsRaw.slice(0, 1).map(color => {
+      const rgb = color.color;
+      return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+    });
+
+    // ✅ Réponse finale
+    return res.json({
+      objets,
       couleurs
     });
 
   } catch (err) {
     if (err.code === 7) {
       console.error('PERMISSION_DENIED : accès API refusé.', err);
-      return res.status(403).json({ error: 'Accès API refusé. Veuillez vérifier vos droits.' });
+      return res.status(403).json({ error: 'Accès API refusé. Vérifie les credentials.' });
     } else if (err.code === 8 || err.code === 429) {
-      console.error('RESOURCE_EXHAUSTED ou trop de requêtes : quota API épuisé.', err);
-      return res.status(429).json({ error: 'Quota API épuisé. Réessayez plus tard.' });
+      console.error('Quota API épuisé ou trop de requêtes.', err);
+      return res.status(429).json({ error: 'Quota API atteint. Réessaye plus tard.' });
     } else {
       console.error('Erreur serveur durant l’analyse Vision:', err);
       return res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
