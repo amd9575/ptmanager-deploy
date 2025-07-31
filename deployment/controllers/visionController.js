@@ -141,103 +141,108 @@ function appartientCategorie(objet, categorieList) {
 }
 
 
-const analyzeImage = async (req, res) => {
-  const { imageBase64 } = req.body;
+   const analyzeImage = async (req, res) => {
+     const { imageBase64 } = req.body;
 
-  if (!imageBase64) {
-    return res.status(400).json({ error: 'Format incorrect : image base64 requise.' });
-  }
+     if (!imageBase64) {
+       return res.status(400).json({ error: 'Format incorrect : image base64 requise.' });
+     }
 
-  try {
-    console.log('Début analyse image');
-    const imageBuffer = Buffer.from(imageBase64, 'base64');
+     try {
+       console.log('Début analyse image');
+       const imageBuffer = Buffer.from(imageBase64, 'base64');
 
-    // 🔍 Tentative avec objectLocalization
-    const [localizationResult] = await client.objectLocalization({ image: { content: imageBuffer } });
-    const localizedObjects = localizationResult.localizedObjectAnnotations;
+       // 🔍 Tentative avec objectLocalization
+       const [localizationResult] = await client.objectLocalization({ image: { content: imageBuffer } });
+       const localizedObjects = localizationResult.localizedObjectAnnotations;
 
-    // 🔁 Fallback si aucun objet détecté
-    if (!localizedObjects.length) {
-      console.warn("Aucun objet localisé, fallback sur labelDetection");
+       // 🔁 Fallback si aucun objet détecté
+       if (!localizedObjects.length) {
+         console.warn("Aucun objet localisé, fallback sur labelDetection");
 
-      const [labelResult] = await client.labelDetection({ image: { content: imageBuffer } });
-      const labelNames = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
-      const objets = regrouperObjets(labelNames);
+         const [labelResult] = await client.labelDetection({ image: { content: imageBuffer } });
+         const labelNames = await extractRelevantTranslatedLabels(labelResult.labelAnnotations);
+         const objets = regrouperObjets(labelNames);
 
-      const [colorResult] = await client.imageProperties({ image: { content: imageBuffer } });
-      const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+         const [colorResult] = await client.imageProperties({ image: { content: imageBuffer } });
+         const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
 
-      const couleurs = colorsRaw.slice(0, 1).map(color => {
-        const rgb = color.color;
-        return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
-      });
+         const couleurs = colorsRaw.slice(0, 1).map(color => {
+           const rgb = color.color;
+           return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+         });
 
-      return res.json({ objets, couleurs });
-    }
+         return res.json({ objets, couleurs });
+       }
 
-    // ✅ Objet détecté avec bounding box
-    const mainObject = localizedObjects[0];
-    if (!mainObject || !mainObject.boundingPoly?.normalizedVertices) {
-      console.warn("Objet principal invalide ou boundingPoly manquant.");
-      return res.status(422).json({ error: "Objet mal détecté, image non exploitable." });
-    }
+       // ✅ Objet détecté avec bounding box
+       const mainObject = localizedObjects[0];
+       if (!mainObject || !mainObject.boundingPoly?.normalizedVertices) {
+         console.warn("Objet principal invalide ou boundingPoly manquant.");
+         return res.status(422).json({ error: "Objet mal détecté, image non exploitable." });
+       }
 
-    // Traduction + regroupement
-    const translatedNames = [];
-    for (const obj of localizedObjects) {
-      const name = await translateToFrench(obj.name);
-      if (!isTooGeneric(name)) {
-        translatedNames.push(name);
-      }
-    }
+       // Traduction + regroupement
+       const translatedNames = [];
+       for (const obj of localizedObjects) {
+         const name = await translateToFrench(obj.name);
+         if (!isTooGeneric(name)) {
+           translatedNames.push(name);
+         }
+       }
 
-    const objets = regrouperObjets(translatedNames);
-    const translatedName = translatedNames[0] || "inconnu";
+       const objets = regrouperObjets(translatedNames);
+       const translatedName = translatedNames[0] || "inconnu";
 
-    console.log('Objet principal détecté:', mainObject.name);
-    console.log('Nom traduit:', translatedName);
+       console.log('Objet principal détecté:', mainObject.name);
+       console.log('Nom traduit:', translatedName);
+       // Normalisation pour comparaison fiable
+       const typeObjet = objets[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
 
-    const afficherCouleur = clothesObjects.includes(translatedName.toLowerCase()) ||
-                            luggageObjects.includes(translatedName.toLowerCase());
+   //    const afficherCouleur = clothesObjects.includes(translatedName.toLowerCase()) ||
+   //                          luggageObjects.includes(translatedName.toLowerCase());
 
-    let couleurs = [];
+       // Couleur uniquement si objet "habillable" ou "transportable"
+       const afficherCouleur = clothesObjects.includes(typeObjet) || luggageObjects.includes(typeObjet);
 
-    if (!afficherCouleur) {
-      return res.json({
-        objets,
-        couleurs: []
-      });
-    }
+       let couleurs = [];
 
-    // 🎯 Recadrage et détection couleur
-    const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
-    const [colorResult] = await client.imageProperties({ image: { content: croppedImageBuffer } });
+       if (!afficherCouleur) {
+         return res.json({
+           objets,
+           couleurs: []
+         });
+       }
 
-    const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
-    couleurs = colorsRaw.slice(0, 1).map(color => {
-      const rgb = color.color;
-      return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
-    });
+       // 🎯 Recadrage et détection couleur
+       const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
+       const [colorResult] = await client.imageProperties({ image: { content: croppedImageBuffer } });
 
-    // ✅ Réponse finale
-    return res.json({
-      objets,
-      couleurs
-    });
+       const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
+       couleurs = colorsRaw.slice(0, 1).map(color => {
+         const rgb = color.color;
+         return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
+       });
 
-  } catch (err) {
-    if (err.code === 7) {
-      console.error('PERMISSION_DENIED : accès API refusé.', err);
-      return res.status(403).json({ error: 'Accès API refusé. Vérifie les credentials.' });
-    } else if (err.code === 8 || err.code === 429) {
-      console.error('Quota API épuisé ou trop de requêtes.', err);
-      return res.status(429).json({ error: 'Quota API atteint. Réessaye plus tard.' });
-    } else {
-      console.error('Erreur serveur durant l’analyse Vision:', err);
-      return res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
-    }
-  }
-};
+       // ✅ Réponse finale
+       return res.json({
+         objets,
+         couleurs
+       });
+
+     } catch (err) {
+       if (err.code === 7) {
+         console.error('PERMISSION_DENIED : accès API refusé.', err);
+         return res.status(403).json({ error: 'Accès API refusé. Vérifie les credentials.' });
+       } else if (err.code === 8 || err.code === 429) {
+         console.error('Quota API épuisé ou trop de requêtes.', err);
+         return res.status(429).json({ error: 'Quota API atteint. Réessaye plus tard.' });
+       } else {
+         console.error('Erreur serveur durant l’analyse Vision:', err);
+         return res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
+       }
+     }
+   };
 
 // --- Contrôleur principal utilisant labelDetection---
 
