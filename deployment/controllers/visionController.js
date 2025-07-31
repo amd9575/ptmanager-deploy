@@ -135,19 +135,27 @@ const analyzeImage = async (req, res) => {
   }
 
   try {
-    const imageBuffer = Buffer.from(imageBase64, 'base64');
+      console.log('Début analyse image');
+      const imageBuffer = Buffer.from(imageBase64, 'base64');
 
     // Localiser objets
-    const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
-    const localizedObjects = localizationResult.localizedObjectAnnotations;
+//const [localizationResult] = await client.objectLocalization({ image: { content: imageBase64 } });
+      const [localizationResult] = await client.objectLocalization({ image: { content: imageBuffer } });
 
-    if (localizedObjects.length === 0) {
-      return res.status(404).json({ error: 'Aucun objet détecté.' });
-    }
+console.log('Résultat localisation obtenu');
+
+      const localizedObjects = localizationResult.localizedObjectAnnotations;
+
+       if (localizedObjects.length === 0) {
+         return res.status(404).json({ error: 'Aucun objet détecté.' });
+       }
 
     // Premier objet détecté
     const mainObject = localizedObjects[0];
+console.log('Objet principal détecté:', mainObject.name);
     const translatedName = await translateToFrench(mainObject.name);
+
+console.log('Nom traduit:', translatedName);
 
     if (isTooGeneric(translatedName)) {
       console.warn(`Nom trop générique détecté: ${translatedName}`);
@@ -162,10 +170,11 @@ const analyzeImage = async (req, res) => {
     if (afficherCouleur) {
       // Découper image autour de l'objet
       const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
-      const croppedBase64 = croppedImageBuffer.toString('base64');
+//const croppedBase64 = croppedImageBuffer.toString('base64');
 
       // Analyser couleurs sur zone recadrée
-      const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
+//const [colorResult] = await client.imageProperties({ image: { content: croppedBase64 } });
+      const [colorResult] = await client.imageProperties({ image: { content: croppedImageBuffer } });
       const colorsRaw = colorResult.imagePropertiesAnnotation?.dominantColors?.colors || [];
 
       // Garder la couleur dominante uniquement
