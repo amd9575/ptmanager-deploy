@@ -40,7 +40,7 @@ const emailRoutes = require('./routes/emailRoutes');
 app.use('/api/send-email', emailRoutes);
 
 const visionRoutes = require('./routes/visionRoutes');
-app.use('/api/vision', visionRoutes); // 🔥 Ajouté ici
+app.use('/api/vision', visionRoutes); //  Ajouté ici
 
 app.get('/', (req, res) => {
   res.send('API PTManager opérationnelle');
