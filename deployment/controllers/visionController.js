@@ -24,6 +24,19 @@ function isTooGeneric(term) {
   return genericTerms.includes(term.toLowerCase());
 }
 
+function regrouperObjets(detectedNames) {
+  const noms = detectedNames.map(n => n.toLowerCase());
+
+  if (noms.includes("clé") && noms.includes("porte-clés")) return ["Trousseau de clés"];
+  if (noms.includes("sac") && noms.includes("dos")) return ["Sac à dos"];
+  if (noms.includes("sac") && noms.includes("voyage")) return ["Sac de voyage"];
+  if (noms.includes("valise") || noms.includes("bagage")) return ["Valise"];
+  if (noms.includes("portable") || noms.includes("téléphone")) return ["Téléphone portable"];
+
+  // Sinon on retourne les 1ers noms traduits
+  return [...new Set(detectedNames)].slice(0, 1);
+}
+
 // --- Traduction via Google Translate API ---
 async function translateToFrench(text) {
   try {
@@ -151,8 +164,18 @@ console.log('Résultat localisation obtenu');
        }
 
     // Premier objet détecté
-    const mainObject = localizedObjects[0];
+//    const mainObject = localizedObjects[0];
+      const translatedNames = [];
+      for (const obj of localizedObjects) {
+        const name = await translateToFrench(obj.name);
+        if (!isTooGeneric(name)) {
+          translatedNames.push(name);
+        }
+      }
+const objets = regrouperObjets(translatedNames);
+
 console.log('Objet principal détecté:', mainObject.name);
+
     const translatedName = await translateToFrench(mainObject.name);
 
 console.log('Nom traduit:', translatedName);
@@ -256,6 +279,8 @@ console.log('Nom traduit:', translatedName);
 //    res.status(500).json({ error: 'Erreur serveur durant l’analyse.' });
 //  }
 //};
+
+
 
 module.exports = {
   analyzeImage,
