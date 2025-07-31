@@ -167,7 +167,14 @@ console.log('Nom traduit:', translatedName);
 
     let couleurs = [];
 
-    if (afficherCouleur) {
+    if (!afficherCouleur) {
+      // Renvoi explicite en cas d'objet non pris en charge
+        return res.json({
+          objets: [translatedName || "inconnu"],
+          couleurs: []
+        });
+    }
+    else{
       // Découper image autour de l'objet
       const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
 //const croppedBase64 = croppedImageBuffer.toString('base64');
