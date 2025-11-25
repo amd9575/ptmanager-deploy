@@ -214,7 +214,7 @@ function appartientCategorie(objet, categorieList) {
          });
        }
 
-       // 🎯 Recadrage et détection couleur
+       // Recadrage et détection couleur
        const croppedImageBuffer = await cropImageFromBoundingBox(imageBuffer, mainObject.boundingPoly);
        const [colorResult] = await client.imageProperties({ image: { content: croppedImageBuffer } });
 
@@ -224,7 +224,7 @@ function appartientCategorie(objet, categorieList) {
          return `#${toHex(rgb.red)}${toHex(rgb.green)}${toHex(rgb.blue)}`;
        });
 
-       // ✅ Réponse finale
+       //  Réponse finale
        return res.json({
          objets,
          couleurs

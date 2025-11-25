@@ -6,10 +6,13 @@ const loginUser = async (req, res) => {
 
   try {
     const user = await userModel.getUserByEmail(email);
-    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return res.status(401).json({ error: 'Mot de passe incorrect' });
+    
+   if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({
+        errorCode: "INVALID_CREDENTIALS",
+        message: "Email ou mot de passe incorrect."
+      });
+    }
 
     await userModel.updateLastConnexion(user._id_user);
 
