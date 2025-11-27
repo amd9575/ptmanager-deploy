@@ -69,7 +69,7 @@ const deleteObject = async (req, res) => {
 };
 
 // Objets filtrés
-const getObjectsFilteredByTime = async (req, res) => {
+const getObjectsFilteredByTime2 = async (req, res) => {
   const {
     currentObjectId,
     objectType,
@@ -117,6 +117,54 @@ const getObjectsFilteredByTime = async (req, res) => {
   }
 };
 
+const getObjectsFilteredByTime = async (req, res) => {
+  const {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound,
+    currentUserId
+  } = req.query;
+
+  console.log('Requête filtrée reçue avec :', {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound,
+    currentUserId
+  });
+
+  // Vérification format date
+  if (!objDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(objDate)) {
+    return res.status(400).json({ error: "Format de date invalide. Attendu: dd/MM/yyyy" });
+  }
+
+  // Conversion dd/MM/yyyy → yyyy-MM-dd
+  const [day, month, year] = objDate.split('/');
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+
+  try {
+    const result = await objectModel.getObjectsFilteredByTime(
+      currentObjectId,
+      objectType,
+      parsedDate.toISOString().split('T')[0],
+      isLost === 'true',
+      isFound === 'true',
+      currentUserId               // 👈 IMPORTANT
+    );
+
+    console.log(`📬 ${result.length} objets envoyés au client`);
+    res.json(result);
+
+  } catch (error) {
+    console.error('getObjectsFilteredByTime error:', error);
+    res.status(500).json({ error: 'Erreur récupération objets filtrés' });
+  }
+};
+
+
 
 const getSimilarObjects = async (req, res) => {
   const { objectIds } = req.body;
@@ -154,6 +202,7 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
+getObjectsFilteredByTime2,
   getObjectsFilteredByTime,
   getSimilarObjects,
   getObjectsByUser,

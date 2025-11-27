@@ -127,7 +127,7 @@ const deleteObject = async (id) => {
 };
 
 // Objets filtrés temporellement
-const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
+const getObjectsFilteredByTimeold = async (currentObjectId, objectType, objDate, isLost, isFound) => {
   try {
     const delta = 30;
     const [day, month, year] = objDate.split('/');
@@ -184,6 +184,57 @@ const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, is
     throw err;
   }
 };
+
+const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound, currentUserId) => {
+  try {
+    const delta = 30;
+    const [day, month, year] = objDate.split('/');
+    const date = new Date(`${year}-${month}-${day}`);
+
+    const fromDate = new Date(date);
+    fromDate.setDate(date.getDate() - delta);
+    const toDate = new Date(date);
+    toDate.setDate(date.getDate() + delta);
+
+    const fromStr = fromDate.toISOString().split('T')[0];
+    const toStr = toDate.toISOString().split('T')[0];
+
+    const query = `
+      SELECT * FROM object
+      WHERE _id_object != $1
+        AND _id_user != $7               -- 👈 Exclure les objets du même utilisateur
+        AND object_type = $2
+        AND object_is_lost = $3
+        AND object_is_found = $4
+        AND object_is_actif = TRUE
+        AND object_date BETWEEN $5 AND $6
+    `;
+
+    const values = [
+      currentObjectId,
+      objectType,
+      isLost,
+      isFound,
+      fromStr,
+      toStr,
+      currentUserId   // 👈 Nouveau paramètre
+    ];
+
+    console.log("---- Recherche objets similaires ----");
+    console.log("UserId filtré :", currentUserId);
+    console.log("Query :", query);
+    console.log("Values :", values);
+
+    const result = await db.query(query, values);
+    return result.rows;
+
+  } catch (err) {
+    console.error('Erreur dans getObjectsFilteredByTime (model):', err);
+    throw err;
+  }
+};
+
+
 const getObjectsByIds = async (ids) => {
   if (!ids || ids.length === 0) return [];
 
@@ -229,6 +280,7 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
+  getObjectsFilteredByTimeold,
   getObjectsFilteredByTime,
   getObjectsByIds,
   getObjectsByUser,
