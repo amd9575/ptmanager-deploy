@@ -69,7 +69,7 @@ const deleteObject = async (req, res) => {
 };
 
 // Objets filtrés
-const getObjectsFilteredByTime2 = async (req, res) => {
+const getObjectsFilteredByTime = async (req, res) => {
   const {
     currentObjectId,
     objectType,
@@ -117,7 +117,7 @@ const getObjectsFilteredByTime2 = async (req, res) => {
   }
 };
 
-const getObjectsFilteredByTime = async (req, res) => {
+const getObjectsFilteredByTime22 = async (req, res) => {
   const {
     currentObjectId,
     objectType,
@@ -202,7 +202,7 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
-getObjectsFilteredByTime2,
+  getObjectsFilteredByTime22,
   getObjectsFilteredByTime,
   getSimilarObjects,
   getObjectsByUser,

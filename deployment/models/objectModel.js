@@ -127,7 +127,7 @@ const deleteObject = async (id) => {
 };
 
 // Objets filtrés temporellement
-const getObjectsFilteredByTimeold = async (currentObjectId, objectType, objDate, isLost, isFound) => {
+const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
   try {
     const delta = 30;
     const [day, month, year] = objDate.split('/');
@@ -185,7 +185,7 @@ const getObjectsFilteredByTimeold = async (currentObjectId, objectType, objDate,
   }
 };
 
-const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound, currentUserId) => {
+const getObjectsFilteredByTime__ = async (currentObjectId, objectType, objDate, isLost, isFound, currentUserId) => {
   try {
     const delta = 30;
     const [day, month, year] = objDate.split('/');
@@ -280,8 +280,8 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
-  getObjectsFilteredByTimeold,
   getObjectsFilteredByTime,
+  getObjectsFilteredByTime__,
   getObjectsByIds,
   getObjectsByUser,
 
