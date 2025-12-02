@@ -17,6 +17,9 @@ const sendEmail = async (req, res) => {
                 pass: process.env.SMTP_USER_PWD,
             },
         });
+//Test serveur smtp
+await transporter.verify();
+console.log("✓ SMTP server is reachable");
 
         await transporter.sendMail({
             from: process.env.EMAIL_SENDER,
