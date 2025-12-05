@@ -3,7 +3,7 @@ const notificationModel = require('../models/notificationModel');
 const { sendFirebaseNotification } = require('../services/firebaseService');
 
 // controllers/emailController.js
-const nodemailer = require('nodemailer');
+
 const { notifyUser } = require('./notificationController'); // 👈 appel interne
 const notificationModel = require('../models/notificationModel'); 
 // (notifyUser l'utilise déjà)
