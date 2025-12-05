@@ -5,8 +5,8 @@ const { sendFirebaseNotification } = require('../services/firebaseService');
 // controllers/emailController.js
 
 const { notifyUser } = require('./notificationController'); // 👈 appel interne
-const notificationModel = require('../models/notificationModel'); 
-// (notifyUser l'utilise déjà)
+
+
 
 const sendEmail = async (req, res) => {
     const { to, cc, subject, body, userId, userEmail, objectId, type } = req.body;
