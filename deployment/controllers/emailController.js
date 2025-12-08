@@ -38,6 +38,8 @@ const sendEmail = async (req, res) => {
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
         // 2️⃣ Notification
+console.log('🔔 Appel notifyUser avec:', { userId, userEmail, objectId, type }); // 👈 LOG 3
+
         await notifyUser(
             {
                 body: { userId, userEmail, objectId, type }
@@ -46,6 +48,7 @@ const sendEmail = async (req, res) => {
                 status: () => ({ json: () => {} })
             }
         );
+console.log('✅ notifyUser terminé'); // 👈 LOG 4
 
         res.status(200).json({ success: true });
     } catch (error) {
