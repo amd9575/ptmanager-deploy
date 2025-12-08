@@ -9,7 +9,10 @@ const notifyUser = async (req, res) => {
 
   try {
     const token = await notificationModel.getDeviceToken(userId);
+console.log('🔔 Token récupéré:', token); // 👈 LOG 
+
     if (!token) {
+console.log('❌ Pas de token pour userId:', userId); // 👈 LOG 3
       return res.status(404).json({ error: 'Token introuvable pour cet utilisateur' });
     }
 
@@ -39,6 +42,7 @@ const notifyUser = async (req, res) => {
     });
 
     await sendFirebaseNotification(token, title, message);
+console.log('✅ Firebase notification envoyée'); // 👈 LOG 4
 
     res.status(201).json({ success: true, notifId });
   } catch (err) {

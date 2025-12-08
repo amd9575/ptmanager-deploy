@@ -14,7 +14,7 @@ const sendEmail = async (req, res) => {
 
     try {
         // Configuration de l'API Brevo - BONNE MÉTHODE
-        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();   
         const apiKey = apiInstance.authentications['apiKey'];
         apiKey.apiKey = process.env.BREVO_API_KEY;
 
