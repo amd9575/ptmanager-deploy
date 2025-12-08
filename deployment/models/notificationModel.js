@@ -21,8 +21,21 @@ const getDeviceToken = async (userId) => {
   return result.rows.length > 0 ? result.rows[0].user_device_token : null;
 };
 
+// 👇 AJOUTE CETTE NOUVELLE FONCTION
+const updateDeviceToken = async (userId, deviceToken) => {
+  const query = `UPDATE users SET user_device_token = $1 WHERE _id_user = $2 RETURNING _id_user`;
+  const result = await db.query(query, [deviceToken, userId]);
+  
+  if (result.rows.length === 0) {
+    throw new Error('Utilisateur non trouvé');
+  }
+  
+  return result.rows[0];
+};
+
 module.exports = { 
    insertNotification, 
    getDeviceToken,
+   updateDeviceToken,
 };
 

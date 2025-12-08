@@ -71,11 +71,32 @@ const createNotification = async (req, res) => {
   }
 };
 
+const updateDeviceToken = async (req, res) => {
+  const { userId } = req.params;
+  const { deviceToken } = req.body;
+  
+  console.log('📱 Mise à jour token pour userId:', userId);
+  console.log('📱 Nouveau token:', deviceToken);
+  
+  if (!deviceToken) {
+    return res.status(400).json({ error: 'deviceToken manquant' });
+  }
+  
+  try {
+    await notificationModel.updateDeviceToken(userId, deviceToken);
+    console.log('✅ Token mis à jour en DB');
+    res.json({ success: true, message: 'Token mis à jour' });
+  } catch (err) {
+    console.error('❌ Erreur update token:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 
 
 module.exports = { 
    createNotification,
    notifyUser,
+   updateDeviceToken,
 };
 
