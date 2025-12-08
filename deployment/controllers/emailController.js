@@ -22,7 +22,7 @@ const sendEmail = async (req, res) => {
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.sender = { 
             email: process.env.EMAIL_NOREPLY_ADDRESS,
-            name: "Votre App" 
+            name: process.env.EMAIL_FROM_NAME
         };
         sendSmtpEmail.to = [{ email: to }];
         
