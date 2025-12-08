@@ -2,62 +2,9 @@ const nodemailer = require('nodemailer');
 const notificationModel = require('../models/notificationModel');
 const { sendFirebaseNotification } = require('../services/firebaseService');
 const SibApiV3Sdk = require('@getbrevo/brevo');
+const { notifyUser } = require('./notificationController');
 
-
-// controllers/emailController.js
-
-const { notifyUser } = require('./notificationController'); // 👈 appel interne
-
-
-
-const sendEmail_smtp = async (req, res) => {
-    const { to, cc, subject, body, userId, userEmail, objectId, type } = req.body;
-
-    if (!to || !subject || !body) {
-        return res.status(400).json({ error: 'Champs requis manquants.' });
-    }
-
-    try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT, 10),
-            secure: process.env.SMTP_SECURE === 'true',
-            auth: {
-                user: process.env.SMTP_USER, // gmail no-reply
-                pass: process.env.SMTP_PASS
-            }
-        });
-
-        // 1️⃣ Envoi email
-        await transporter.sendMail({
-            from: process.env.EMAIL_NOREPLY_ADDRESS,
-            to,
-            cc,
-            subject,
-            text: body,
-            replyTo: process.env.EMAIL_CONTACT_ADDRESS
-        });
-
-        // 2️⃣ Appel interne du contrôleur de notification
-        // (SANS requête HTTP, on utilise direct la fonction)
-        await notifyUser(
-            {
-                body: { userId, userEmail, objectId, type }
-            },
-            {
-                status: () => ({ json: () => {} }) // mock minimal pour l’appel interne
-            }
-        );
-
-        res.status(200).json({ success: true });
-
-    } catch (error) {
-        console.error('Erreur envoi email:', error);
-        res.status(500).json({ error: "Échec de l'envoi du mail." });
-    }
-};
-
-
+// Fonction principale avec API Brevo (à utiliser)
 const sendEmail = async (req, res) => {
     const { to, cc, subject, body, userId, userEmail, objectId, type } = req.body;
     
@@ -66,12 +13,10 @@ const sendEmail = async (req, res) => {
     }
 
     try {
-        // Configuration de l'API Brevo
+        // Configuration de l'API Brevo - BONNE MÉTHODE
         const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        apiInstance.setApiKey(
-            SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
-            process.env.BREVO_API_KEY // Ta clé API Brevo
-        );
+        const apiKey = apiInstance.authentications['apiKey'];
+        apiKey.apiKey = process.env.BREVO_API_KEY;
 
         // Préparer l'email
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
@@ -89,10 +34,10 @@ const sendEmail = async (req, res) => {
         sendSmtpEmail.textContent = body;
         sendSmtpEmail.replyTo = { email: process.env.EMAIL_CONTACT_ADDRESS };
 
-        // 1️⃣ Envoi via API Brevo (pas de timeout!)
+        // 1️⃣ Envoi via API Brevo
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-        // 2️⃣ Notification (ton code existant)
+        // 2️⃣ Notification
         await notifyUser(
             {
                 body: { userId, userEmail, objectId, type }
@@ -109,11 +54,52 @@ const sendEmail = async (req, res) => {
     }
 };
 
-module.exports = { sendEmail };
+// Ancienne fonction SMTP (à garder en backup si besoin)
+const sendEmail_smtp = async (req, res) => {
+    const { to, cc, subject, body, userId, userEmail, objectId, type } = req.body;
+    
+    if (!to || !subject || !body) {
+        return res.status(400).json({ error: 'Champs requis manquants.' });
+    }
 
-module.exports = { sendEmail_smtp };
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT, 10),
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        });
 
+        await transporter.sendMail({
+            from: process.env.EMAIL_NOREPLY_ADDRESS,
+            to,
+            cc,
+            subject,
+            text: body,
+            replyTo: process.env.EMAIL_CONTACT_ADDRESS
+        });
 
+        await notifyUser(
+            {
+                body: { userId, userEmail, objectId, type }
+            },
+            {
+                status: () => ({ json: () => {} })
+            }
+        );
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Erreur envoi email:', error);
+        res.status(500).json({ error: "Échec de l'envoi du mail." });
+    }
+};
+
+// Export les deux fonctions
 module.exports = {
     sendEmail,
+    sendEmail_smtp
 };
