@@ -1,61 +1,88 @@
-// -------------------------- Utilisation de axios pour l'ancinene version de firebase -------------------------
-//const axios = require('axios');
-
-//const sendFirebaseNotification = async (deviceToken, title, message) => {
-//  try {
-//    const payload = {
-//      to: deviceToken,
-//      notification: {
-//        title,
-//        body: message,
-//      },
-//    };
-
-//   const headers = {
-//      'Content-Type': 'application/json',
-//      Authorization: `key=${process.env.FIREBASE_SERVER_KEY}`,
-//    };
-
-//    const res = await axios.post('https://fcm.googleapis.com/fcm/send', payload, { headers });
-//    console.log('✅ FCM response:', res.data);
-//    return res.data;
-//  } catch (err) {
-//    console.error('❌ Erreur FCM:', err.response?.data || err.message);
-//    throw err;
-//  }
-//};
-
-//module.exports = { sendFirebaseNotification };
-
-// -------------------------- Utilisation de firebase-admin -------------------------
+// services/firebaseService.js
 const admin = require('firebase-admin');
-const path = require('path');
 
-// Initialise Firebase Admin SDK avec ton service-account.json
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+// Note: Assurez-vous que Firebase Admin est déjà initialisé dans votre app
+// Si ce n'est pas fait, décommentez les lignes ci-dessous :
+//
+// const serviceAccount = require('../path/to/serviceAccountKey.json');
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount)
+// });
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-const sendFirebaseNotification = async (deviceToken, title, message) => {
-  const payload = {
+/**
+ * Envoie une notification push Firebase avec données optionnelles
+ * 
+ * @param {string} deviceToken - Token FCM de l'appareil
+ * @param {string} title - Titre de la notification
+ * @param {string} body - Corps de la notification
+ * @param {object} data - Données additionnelles (matchId, objectId, type, etc.)
+ */
+const sendFirebaseNotification = async (deviceToken, title, body, data = {}) => {
+  
+  // Construire le message
+  const message = {
+    token: deviceToken,
     notification: {
-      title,
-      body: message
+      title: title,
+      body: body
     },
-    token: deviceToken
+    data: {}, // Toutes les valeurs doivent être des strings
+    android: {
+      priority: 'high',
+      notification: {
+        channelId: 'LostAndFoundChannel',
+        priority: 'high',
+        sound: 'default'
+      }
+    }
   };
+  
+  // Convertir toutes les données en strings (Firebase exige ça)
+  if (data && typeof data === 'object') {
+    for (const key in data) {
+      message.data[key] = String(data[key]);
+    }
+  }
+  
+  console.log('📤 Envoi notification Firebase:', {
+    token: deviceToken.substring(0, 20) + '...',
+    title,
+    body,
+    data: message.data
+  });
 
   try {
-    const response = await admin.messaging().send(payload);
-    console.log('✅ Notification envoyée avec succès:', response);
+    const response = await admin.messaging().send(message);
+    console.log('✅ Notification Firebase envoyée avec succès:', response);
     return response;
   } catch (error) {
-    console.error('❌ Erreur lors de l\'envoi de la notification:', error);
+    console.error('❌ Erreur envoi Firebase:', error);
     throw error;
   }
 };
 
-module.exports = { sendFirebaseNotification };
+/**
+ * Envoie une notification de match trouvé au perdant
+ * 
+ * @param {string} deviceToken - Token FCM du perdant
+ * @param {number} matchId - ID du match
+ * @param {number} foundObjectId - ID de l'objet trouvé
+ * @param {string} objectName - Nom de l'objet
+ */
+const sendMatchFoundNotification = async (deviceToken, matchId, foundObjectId, objectName) => {
+  const title = "Objet retrouvé ?";
+  const body = `Quelqu'un pense avoir trouvé votre ${objectName}`;
+  
+  const data = {
+    type: 'match_found',
+    matchId: matchId.toString(),
+    foundObjectId: foundObjectId.toString()
+  };
+  
+  return await sendFirebaseNotification(deviceToken, title, body, data);
+};
 
+module.exports = {
+  sendFirebaseNotification,
+  sendMatchFoundNotification
+};
