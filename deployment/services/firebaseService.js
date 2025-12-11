@@ -1,5 +1,23 @@
 // services/firebaseService.js
 const admin = require('firebase-admin');
+// ✅ Initialisation PROTÉGÉE (une seule fois)
+if (!admin.apps.length) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    
+    console.log('✅ Firebase Admin initialisé');
+    
+  } catch (error) {
+    console.error('❌ Erreur init Firebase:', error.message);
+    throw error;
+  }
+} else {
+  console.log('ℹ️ Firebase Admin déjà initialisé');
+}
 
 // Note: Assurez-vous que Firebase Admin est déjà initialisé dans votre app
 // Si ce n'est pas fait, décommentez les lignes ci-dessous :

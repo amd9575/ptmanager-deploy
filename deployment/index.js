@@ -60,3 +60,6 @@ app.listen(PORT, () => {
   console.log(`Serveur démarré sur http://localhost:${PORT}`);
 });
 
+const matchRoutes = require('./routes/matchRoutes');
+app.use('/api/matches', matchRoutes);
+
