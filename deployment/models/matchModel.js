@@ -55,9 +55,9 @@ const getPendingMatchesByUser = async (userId) => {
       o_lost.object_description as lost_object_description,
       
       -- Infos du trouveur (pour l'email plus tard)
-      u_finder.user_name as finder_name,
-      u_finder.user_firstname as finder_firstname,
-      u_finder.user_email as finder_email
+      u_finder.l_name as finder_name,
+      u_finder.f_name as finder_firstname,
+      u_finder.email as finder_email
       
     FROM matches m
     
@@ -88,16 +88,16 @@ const getMatchById = async (matchId) => {
       m.*,
       
       -- Infos trouveur
-      u_finder.user_name as finder_name,
-      u_finder.user_firstname as finder_firstname,
-      u_finder.user_email as finder_email,
-      u_finder.user_phone as finder_phone,
+      u_finder.l_name as finder_name,
+      u_finder.f_name as finder_firstname,
+      u_finder.email as finder_email,
+      u_finder.phone as finder_phone,
       
       -- Infos perdant
-      u_loser.user_name as loser_name,
-      u_loser.user_firstname as loser_firstname,
-      u_loser.user_email as loser_email,
-      u_loser.user_phone as loser_phone,
+      u_loser.l_name as loser_name,
+      u_loser.f_name as loser_firstname,
+      u_loser.email as loser_email,
+      u_loser.phone as loser_phone,
       
       -- Infos objet trouvé
       o_found.object_type as found_object_type,
