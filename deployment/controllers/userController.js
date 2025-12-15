@@ -93,7 +93,8 @@ const createUser = async (req, res) => {
     res.status(201).json({ success: true, id_user: userId });
 
   } catch (err) {
-      if (err.code === '23505') { // erreur PostgreSQL : email déjà utilisé
+//      if (err.code === '23505') { // erreur PostgreSQL : email déjà utilisé
+         if (err.message === 'EMAIL_EXISTS') { //: email déjà utilisé
           return res.status(400).json({ error: 'EMAIL_ALREADY_EXISTS' });
       }
       console.error('Erreur registerUser :', err);
