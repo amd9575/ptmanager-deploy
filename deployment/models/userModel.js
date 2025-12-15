@@ -96,6 +96,7 @@ const getUsersAndObjectsByObjectIds = async(ids) =>{
       results.push(rows[0]);
     }
   }
+ return results;
 }
 
 const getDeviceTokenByUserId = async (userId) => {
