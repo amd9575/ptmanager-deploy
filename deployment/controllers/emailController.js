@@ -13,56 +13,52 @@ const sendEmail = async (req, res) => {
     }
 
     try {
-        // Configuration de l'API Brevo - BONNE MÉTHODE
-        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();   
-        const apiKey = apiInstance.authentications['apiKey'];
-        apiKey.apiKey = process.env.BREVO_API_KEY;
+           // Configuration de l'API Brevo - BONNE MÉTHODE
+           const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();   
+           const apiKey = apiInstance.authentications['apiKey'];
+           apiKey.apiKey = process.env.BREVO_API_KEY;
 
-        // Préparer l'email
-        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-        sendSmtpEmail.sender = { 
-            email: process.env.EMAIL_NOREPLY_ADDRESS,
-            name: process.env.EMAIL_FROM_NAME
-        };
-        sendSmtpEmail.to = [{ email: to }];
-        
-        if (cc) {
-            sendSmtpEmail.cc = [{ email: cc }];
-        }
-        
-        sendSmtpEmail.subject = subject;
-        sendSmtpEmail.textContent = body;
-        sendSmtpEmail.replyTo = { email: process.env.EMAIL_CONTACT_ADDRESS };
+           // Préparer l'email
+           const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+           sendSmtpEmail.sender = { 
+               email: process.env.EMAIL_NOREPLY_ADDRESS,
+               name: process.env.EMAIL_FROM_NAME
+           };
+           sendSmtpEmail.to = [{ email: to }];
+           
+           if (cc) {
+               sendSmtpEmail.cc = [{ email: cc }];
+           }
+           
+           sendSmtpEmail.subject = subject;
+           sendSmtpEmail.textContent = body;
+           sendSmtpEmail.replyTo = { email: process.env.EMAIL_CONTACT_ADDRESS };
 
-        // 1️⃣ Envoi via API Brevo
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
+           // 1️⃣ Envoi via API Brevo
+           await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-        // 2️⃣ Notification
+           // 2️⃣ Notification
+          if (type && type !== 'contact_form' && objectId && objectId > 0) {
+                try {
 
-         //Pas de notif si on vient de contact
-         if (type && type !== 'contact_form' && objectId && objectId > 0) {
-             try {
-                 await notifyUser({...});
-                 console.log('✅ Notification créée');
-             } catch (notifError) {
-                 console.error('⚠️ Erreur notification (non bloquante)');
-                 // Continue même si erreur
-             }
-         } else {
-             console.log('ℹ️ Pas de notification (type:', type, ')');
-         }
+                    await notifyUser(
+                        {
+                            body: { userId, userEmail, objectId, type }
+                        },
+                        {
+                            status: () => ({ json: () => {} })
+                        }
+                    );
+                     console.log('✅ Notification créée');
+                } catch (notifError) {
+                    console.error(' Erreur notification (non bloquante)');
+                    // Continue même si erreur
+                }
+          } else {
+                console.log('ℹ️ Pas de notification (type:', type, ')');
+          }
 
-        await notifyUser(
-            {
-                body: { userId, userEmail, objectId, type }
-            },
-            {
-                status: () => ({ json: () => {} })
-            }
-        );
-
-
-        res.status(200).json({ success: true });
+           res.status(200).json({ success: true });
     } catch (error) {
         console.error('Erreur envoi email:', error);
         res.status(500).json({ error: "Échec de l'envoi du mail." });
