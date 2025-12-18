@@ -57,7 +57,7 @@ const sendEmail = async (req, res) => {
           } else {
                 console.log('ℹ️ Pas de notification (type:', type, ')');
           }
-
+            console.log('✅ Email envoyé avec succes");
            res.status(200).json({ success: true });
     } catch (error) {
         console.error('Erreur envoi email:', error);
