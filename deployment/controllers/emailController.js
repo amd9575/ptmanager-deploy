@@ -38,7 +38,19 @@ const sendEmail = async (req, res) => {
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
         // 2️⃣ Notification
-console.log('🔔 Appel notifyUser avec:', { userId, userEmail, objectId, type }); // 👈 LOG 3
+
+         //Pas de notif si on vient de contact
+         if (type && type !== 'contact_form' && objectId && objectId > 0) {
+             try {
+                 await notifyUser({...});
+                 console.log('✅ Notification créée');
+             } catch (notifError) {
+                 console.error('⚠️ Erreur notification (non bloquante)');
+                 // Continue même si erreur
+             }
+         } else {
+             console.log('ℹ️ Pas de notification (type:', type, ')');
+         }
 
         await notifyUser(
             {
@@ -48,7 +60,7 @@ console.log('🔔 Appel notifyUser avec:', { userId, userEmail, objectId, type }
                 status: () => ({ json: () => {} })
             }
         );
-console.log('✅ notifyUser terminé'); // 👈 LOG 4
+
 
         res.status(200).json({ success: true });
     } catch (error) {
