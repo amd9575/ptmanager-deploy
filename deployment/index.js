@@ -8,6 +8,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const cors = require('cors');
+
 // ✅ Gérer la variable d’environnement pour le service account
 if (process.env.SERVICE_ACCOUNT_BASE64) {
   const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
@@ -22,6 +24,13 @@ const userRoutes = require('./routes/userRoutes');
 
 const initDbRoute = require('./routes/initDbRoute');
 app.use('/init-db', initDbRoute);
+//pour les appel a mail depuis html
+app.use(cors({
+  origin: ['https://objetperdu.org', 'https://www.objetperdu.org'],
+  credentials: true
+}));
+//fin
+app.use(express.json());
 
 app.use(express.json());
 //app.use(express.json({ limit: '10mb' }));
