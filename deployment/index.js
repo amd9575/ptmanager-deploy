@@ -75,7 +75,7 @@ app.get('/api/test-sentry', (req, res) => {
 });
 
 // IMPORTANT : errorHandler de Sentry APRÈS toutes les routes
-app.use(errorHandler());
+initSentry(app);
 
 // Middleware d'erreur final
 app.use((err, req, res, next) => {
