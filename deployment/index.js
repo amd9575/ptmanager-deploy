@@ -1,55 +1,53 @@
 const express = require('express');
 const db = require('./db');
 require('dotenv').config();
-
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
+
+// IMPORTANT : Importer Sentry AVANT de créer l'app
+const { initSentry, errorHandler, Sentry } = require('./sentryConfig');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const cors = require('cors');
+// IMPORTANT : Initialiser Sentry EN PREMIER (avant tout middleware)
+initSentry(app);
 
-// ✅ Gérer la variable d’environnement pour le service account
+// Gérer la variable d'environnement pour le service account
 if (process.env.SERVICE_ACCOUNT_BASE64) {
   const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
   const tempPath = path.join(__dirname, 'service-account.json');
-
   fs.writeFileSync(tempPath, decoded, { encoding: 'utf8' });
   process.env.GOOGLE_APPLICATION_CREDENTIALS = tempPath;
 }
 
-
-const userRoutes = require('./routes/userRoutes');
-
-const initDbRoute = require('./routes/initDbRoute');
-app.use('/init-db', initDbRoute);
-//pour les appel a mail depuis html
+// CORS - pour les appels depuis HTML
 app.use(cors({
   origin: ['https://objetperdu.org', 'https://www.objetperdu.org'],
   credentials: true
 }));
-//fin
-app.use(express.json());
 
 app.use(express.json());
-//app.use(express.json({ limit: '10mb' }));
-app.use('/api/users', userRoutes);
 
+// Routes
+const userRoutes = require('./routes/userRoutes');
+const initDbRoute = require('./routes/initDbRoute');
 const objectRoutes = require('./routes/objectRoutes');
-app.use('/api/objects', objectRoutes);
-
 const imgRoutes = require('./routes/imgObjectRoutes');
-app.use('/api/imgs', imgRoutes);
-
 const notificationRoute = require('./routes/notificationRoutes');
-app.use('/api/notifications', notificationRoute);
-
 const emailRoutes = require('./routes/emailRoutes');
-app.use('/api/send-email', emailRoutes);
-
 const visionRoutes = require('./routes/visionRoutes');
-app.use('/api/vision', visionRoutes); //  Ajouté ici
+const matchRoutes = require('./routes/matchRoutes');
+
+app.use('/init-db', initDbRoute);
+app.use('/api/users', userRoutes);
+app.use('/api/objects', objectRoutes);
+app.use('/api/imgs', imgRoutes);
+app.use('/api/notifications', notificationRoute);
+app.use('/api/send-email', emailRoutes);
+app.use('/api/vision', visionRoutes);
+app.use('/api/matches', matchRoutes);
 
 app.get('/', (req, res) => {
   res.send('API PTManager opérationnelle');
@@ -61,14 +59,36 @@ app.get('/test-db', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Erreur requête DB', err);
+    Sentry.captureException(err); // ✅ Log l'erreur dans Sentry
     res.status(500).send('Erreur DB');
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+// Route de test Sentry (à retirer après vérification)
+app.get('/api/test-sentry', (req, res) => {
+  try {
+    throw new Error('🧪 Test Sentry Backend - Tout fonctionne !');
+  } catch (error) {
+    Sentry.captureException(error);
+    res.json({ success: true, message: 'Erreur de test envoyée à Sentry' });
+  }
 });
 
-const matchRoutes = require('./routes/matchRoutes');
-app.use('/api/matches', matchRoutes);
+// IMPORTANT : errorHandler de Sentry APRÈS toutes les routes
+app.use(errorHandler());
 
+// Middleware d'erreur final
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  // Sentry a déjà capturé l'erreur grâce au errorHandler ci-dessus
+  res.status(500).json({ 
+    success: false, 
+    message: 'Erreur serveur',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  console.log('Sentry activé pour le monitoring des erreurs');
+});
