@@ -60,7 +60,7 @@ const createMatch = async (req, res) => {
       
       console.log('🔔 Notification envoyée au loser userId:', loserUserId);
     } else {
-      console.log('⚠️ Pas de token pour userId:', loserUserId);
+      console.log('Pas de token pour userId:', loserUserId);
     }
     
     res.status(201).json({ 

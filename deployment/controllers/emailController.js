@@ -26,9 +26,7 @@ const sendEmail = async (req, res) => {
            };
            sendSmtpEmail.to = [{ email: to }];
            
-           if (cc) {
-               sendSmtpEmail.cc = [{ email: cc }];
-           }
+       
            
            sendSmtpEmail.subject = subject;
            sendSmtpEmail.textContent = body;
