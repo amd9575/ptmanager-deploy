@@ -75,6 +75,7 @@ const getPendingMatchesByUser = async (userId) => {
     INNER JOIN users u_loser ON m._id_loser_user = u_loser._id_user  -- ✅ AJOUTER
     
     WHERE (m._id_loser_user = $1 OR m._id_finder_user = $1)  -- ✅ MODIFIER
+      AND m.searcher_user_id != $1      
       AND m.contact_initiated = false
       AND o_found.object_is_actif = true
       

@@ -178,7 +178,7 @@ const confirmMatch = async (req, res) => {
     }
     
     // 5. Marquer le match comme "contact initié"
-    wait matchModel.markContactInitiated(matchId);
+    await matchModel.markContactInitiated(matchId);
 
 // 6. ✅ AJOUTER : Envoyer notification au trouveur
 const finderToken = await notificationModel.getDeviceToken(match._id_finder_user);
