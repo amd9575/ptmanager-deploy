@@ -5,7 +5,7 @@ const db = require('../db');
  * Crée un nouveau match entre un objet trouvé et un objet perdu
  */
 const createMatch = async (matchData) => {
-  const { foundObjectId, lostObjectId, finderUserId, loserUserId, score } = matchData;
+  const { foundObjectId, lostObjectId, finderUserId, loserUserId, searcherId, score } = matchData;
   
   const query = `
     INSERT INTO matches (
@@ -13,14 +13,15 @@ const createMatch = async (matchData) => {
       _id_lost_object,
       _id_finder_user,
       _id_loser_user,
+      searcher_user_id, 
       match_score,
       contact_initiated,
       created_at
-    ) VALUES ($1, $2, $3, $4, $5, false, NOW())
+    ) VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
     RETURNING _id_match
   `;
   
-  const values = [foundObjectId, lostObjectId, finderUserId, loserUserId, score];
+  const values = [foundObjectId, lostObjectId, finderUserId, loserUserId, searcherId, score];
   
   console.log('📝 Création match avec:', values);
   
@@ -38,6 +39,8 @@ const getPendingMatchesByUser = async (userId) => {
       m._id_match,
       m._id_found_object,
       m._id_lost_object,
+      m._id_finder_user,        -- ✅ AJOUTER
+      m._id_loser_user,         -- ✅ AJOUTER
       m.match_score,
       m.created_at,
       
@@ -50,22 +53,28 @@ const getPendingMatchesByUser = async (userId) => {
       o_found.object_latitude as found_object_latitude,
       o_found.object_longitude as found_object_longitude,
       
-      -- Infos de l'objet perdu (le sien)
+      -- Infos de l'objet perdu
       o_lost.object_type as lost_object_type,
       o_lost.object_description as lost_object_description,
       
-      -- Infos du trouveur (pour l'email plus tard)
+      -- Infos du trouveur
       u_finder.l_name as finder_name,
       u_finder.f_name as finder_firstname,
-      u_finder.email as finder_email
+      u_finder.email as finder_email,
+      
+      -- ✅ AJOUTER : Infos du perdant
+      u_loser.l_name as loser_name,
+      u_loser.f_name as loser_firstname,
+      u_loser.email as loser_email
       
     FROM matches m
     
     INNER JOIN object o_found ON m._id_found_object = o_found._id_object
     INNER JOIN object o_lost ON m._id_lost_object = o_lost._id_object
     INNER JOIN users u_finder ON m._id_finder_user = u_finder._id_user
+    INNER JOIN users u_loser ON m._id_loser_user = u_loser._id_user  -- ✅ AJOUTER
     
-    WHERE m._id_loser_user = $1
+    WHERE (m._id_loser_user = $1 OR m._id_finder_user = $1)  -- ✅ MODIFIER
       AND m.contact_initiated = false
       AND o_found.object_is_actif = true
       
@@ -74,7 +83,7 @@ const getPendingMatchesByUser = async (userId) => {
   
   const result = await db.query(query, [userId]);
   
-  console.log(`📬 ${result.rows.length} matches en attente pour userId ${userId}`);
+  console.log(`📬 ${result.rows.length} matches en attente pour userId ${userId}`);  // ✅ CORRIGER (il manquait une parenthèse)
   
   return result.rows;
 };

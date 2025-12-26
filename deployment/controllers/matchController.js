@@ -9,7 +9,7 @@ const { sendContactEmail } = require('../services/emailService');
  * Crée un nouveau match et envoie une notification au perdant
  */
 const createMatch = async (req, res) => {
-  const { foundObjectId, lostObjectId, finderUserId, loserUserId, score } = req.body;
+  const { foundObjectId, lostObjectId, finderUserId, loserUserId, searcherId, score } = req.body;
   
   console.log('🆕 Création match:', req.body);
   
@@ -37,18 +37,38 @@ const createMatch = async (req, res) => {
       lostObjectId,
       finderUserId,
       loserUserId,
+      searcherId,  // ← AJOUTER ICI
       score
     });
     
     console.log('✅ Match créé avec ID:', matchId);
     
-    // 3. Récupérer le token du perdant pour la notification
-    const token = await notificationModel.getDeviceToken(loserUserId);
+    // 3. Déterminer qui doit être notifié
+    // Notifier celui qui N'A PAS cherché
+    let userToNotify;
+    
+    if (searcherId == finderUserId) {
+      // Le trouveur a cherché → notifier le perdant
+      userToNotify = loserUserId;
+      console.log('🔍 Trouveur a cherché → notification au perdant:', loserUserId);
+    } else {
+      // Le perdant a cherché → notifier le trouveur
+      userToNotify = finderUserId;
+      console.log('🔍 Perdant a cherché → notification au trouveur:', finderUserId);
+    }
+    
+    // 4. Récupérer le token de la personne à notifier
+    const token = await notificationModel.getDeviceToken(userToNotify);  // ← CHANGER loserUserId en userToNotify
     
     if (token) {
-      // 4. Envoyer la notification Firebase
-      const title = "Objet retrouvé ?";
-      const message = "Quelqu'un pense avoir trouvé votre objet";
+      // 5. Envoyer la notification Firebase avec message adapté
+      const title = userToNotify == finderUserId 
+        ? "Quelqu'un a perdu un objet !"
+        : "Objet retrouvé ?";
+      
+      const message = userToNotify == finderUserId
+        ? "Un objet que vous avez trouvé correspond à une déclaration de perte"
+        : "Quelqu'un pense avoir trouvé votre objet";
       
       const notifData = {
         type: 'match_found',
@@ -58,9 +78,9 @@ const createMatch = async (req, res) => {
       
       await sendFirebaseNotification(token, title, message, notifData);
       
-      console.log('🔔 Notification envoyée au loser userId:', loserUserId);
+      console.log('🔔 Notification envoyée à userId:', userToNotify);  // ← CHANGER loserUserId en userToNotify
     } else {
-      console.log('Pas de token pour userId:', loserUserId);
+      console.log('⚠️ Pas de token pour userId:', userToNotify);  // ← CHANGER loserUserId en userToNotify
     }
     
     res.status(201).json({ 
