@@ -141,9 +141,13 @@ const confirmMatch = async (req, res) => {
     }
     
     // 2. Vérifier que c'est bien le bon utilisateur
-    if (match._id_loser_user !== parseInt(userId)) {
-      return res.status(403).json({ error: 'Non autorisé' });
-    }
+// if (match._id_loser_user !== parseInt(userId)) {
+//   return res.status(403).json({ error: 'Non autorisé' });
+// }
+   const userIdInt = parseInt(userId);
+   if (match._id_loser_user !== userIdInt && match._id_finder_user !== userIdInt) {
+     return res.status(403).json({ error: 'Non autorisé' });
+   }
     
     // 3. Vérifier si déjà contacté
     if (match.contact_initiated) {
@@ -174,13 +178,29 @@ const confirmMatch = async (req, res) => {
     }
     
     // 5. Marquer le match comme "contact initié"
-    await matchModel.markContactInitiated(matchId);
-    
-    res.status(200).json({ 
-      success: true, 
-      alreadyContacted: false,
-      message: 'Email envoyé au trouveur' 
-    });
+    wait matchModel.markContactInitiated(matchId);
+
+// 6. ✅ AJOUTER : Envoyer notification au trouveur
+const finderToken = await notificationModel.getDeviceToken(match._id_finder_user);
+
+if (finderToken) {
+  await sendFirebaseNotification(
+    finderToken,
+    "Confirmation de match",
+    `${match.loser_firstname} a confirmé que c'est son objet`,
+    {
+      type: 'match_confirmed',
+      matchId: matchId.toString()
+    }
+  );
+  console.log('🔔 Notification envoyée au trouveur');
+}
+
+res.status(200).json({ 
+  success: true, 
+  alreadyContacted: false,
+  message: 'Email envoyé au trouveur' 
+});
     
   } catch (err) {
     console.error('❌ Erreur confirmMatch:', err);
@@ -210,10 +230,10 @@ const rejectMatch = async (req, res) => {
     }
     
     // 2. Vérifier que c'est bien le bon utilisateur
-    if (match._id_loser_user !== parseInt(userId)) {
-      return res.status(403).json({ error: 'Non autorisé' });
-    }
-    
+const userIdInt = parseInt(userId);
+if (match._id_loser_user !== userIdInt && match._id_finder_user !== userIdInt) {
+  return res.status(403).json({ error: 'Non autorisé' });
+}
     // 3. Supprimer le match
     await matchModel.deleteMatch(matchId);
     
