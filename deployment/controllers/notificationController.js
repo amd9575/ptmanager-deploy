@@ -41,8 +41,10 @@ console.log('❌ Pas de token pour userId:', userId); // 👈 LOG 3
       isManaged: true,
     });
 
-    await sendFirebaseNotification(token, title, message);
-console.log('✅ Firebase notification envoyée'); // 👈 LOG 4
+//Commenté le 2712
+//await sendFirebaseNotification(token, title, message);
+//console.log('✅ Firebase notification envoyée'); // 👈 LOG 4
+//Fin commenté le 27/12
 
     res.status(201).json({ success: true, notifId });
   } catch (err) {
