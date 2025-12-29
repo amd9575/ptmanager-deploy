@@ -195,6 +195,26 @@ const getObjectsByUser = async (req, res) => {
   }
 };
 
+const markAsInactive = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const object = await objectModel.markAsInactive(id);
+    
+    if (!object) {
+      return res.status(404).json({ error: 'Objet non trouvé' });
+    }
+    
+    console.log('✅ Objet marqué comme inactif:', id);
+    res.json({ success: true, object });
+    
+  } catch (error) {
+    console.error('❌ Erreur mark-inactive:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 module.exports = {
   createObject,
@@ -206,5 +226,6 @@ module.exports = {
   getObjectsFilteredByTime,
   getSimilarObjects,
   getObjectsByUser,
+  markAsInactive,
 };
 

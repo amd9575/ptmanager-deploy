@@ -272,6 +272,17 @@ const getObjectsByUser = async (userId) => {
 
   return objects;
 };
+const markAsInactive = async (objectId) => {
+  const query = `
+    UPDATE object 
+    SET object_is_actif = false 
+    WHERE _id_object = $1 
+    RETURNING *
+  `;
+  
+  const result = await db.query(query, [objectId]);
+  return result.rows[0];
+};
 
 
 module.exports = {
@@ -284,6 +295,7 @@ module.exports = {
   getObjectsFilteredByTime__,
   getObjectsByIds,
   getObjectsByUser,
+  markAsInactive,
 
 };
 

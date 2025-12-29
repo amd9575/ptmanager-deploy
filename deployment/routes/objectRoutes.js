@@ -12,7 +12,7 @@ router.delete('/:id', objectController.deleteObject);
 router.post('/object-details', userController.getUserObjectDetails);
 router.post('/similar', objectController.getSimilarObjects);
 router.get('/byUser/:id', objectController.getObjectsByUser);
-
+router.put('/:id/mark-inactive', objectController.markAsInactive);
 
 
 module.exports = router;

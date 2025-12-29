@@ -94,7 +94,7 @@ const sendContactEmail = async (emailData) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎉 Bonne nouvelle !</h1>
+          <h1>Bonne nouvelle !</h1>
         </div>
         
         <div class="content">
