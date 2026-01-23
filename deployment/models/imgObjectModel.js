@@ -10,7 +10,7 @@ const insertImage = async (img) => {
   const values = [img.imgName, img.pHash, img.id_object];
 
   const result = await db.query(query, values);
-  return result.rows[0]._id_img;
+  return result.rows[0]._id_imgobject;
 };
 
 // 📥 Récupérer toutes les images
