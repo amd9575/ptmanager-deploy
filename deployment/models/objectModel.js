@@ -359,7 +359,7 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
-  getObjectsFilteredByTime
+  getObjectsFilteredByTime,
   getObjectsFilteredByTime__modifiee0202,
   getObjectsFilteredByTime__,
   getObjectsByIds,
