@@ -270,7 +270,7 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
-  getObjectsFilteredByTime
+  getObjectsFilteredByTime,
   getObjectsFilteredByTime22,
   getObjectsFilteredByTime_0202,
   getSimilarObjects,
