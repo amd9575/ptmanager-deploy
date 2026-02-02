@@ -75,6 +75,54 @@ const getObjectsFilteredByTime = async (req, res) => {
     objectType,
     objDate,
     isLost,
+    isFound,
+    currentUserId  // ✅ OPTIONNEL (peut être undefined)
+  } = req.query;
+
+  console.log('Requête filtrée reçue avec :', {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
+    isFound,
+    currentUserId: currentUserId || 'non fourni'
+  });
+
+  // Vérification format date
+  if (!objDate || !/^\d{2}\/\d{2}\/\d{4}$/.test(objDate)) {
+    return res.status(400).json({ error: "Format de date invalide. Attendu: dd/MM/yyyy" });
+  }
+
+  // Conversion dd/MM/yyyy → yyyy-MM-dd
+  const [day, month, year] = objDate.split('/');
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+
+  try {
+    const result = await objectModel.getObjectsFilteredByTime(
+      currentObjectId,
+      objectType,
+      parsedDate.toISOString().split('T')[0],
+      isLost === 'true',
+      isFound === 'true',
+      currentUserId || null  // ✅ null si absent
+    );
+
+    console.log(`📬 ${result.length} objets envoyés au client`);
+    res.json(result);
+
+  } catch (error) {
+    console.error('getObjectsFilteredByTime error:', error);
+    res.status(500).json({ error: 'Erreur récupération objets filtrés' });
+  }
+};
+
+// Objets filtrésremplacée le 0202 par la focnrtion sans _0202
+const getObjectsFilteredByTime_0202 = async (req, res) => {
+  const {
+    currentObjectId,
+    objectType,
+    objDate,
+    isLost,
     isFound
   } = req.query;
 
@@ -222,8 +270,9 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
+  getObjectsFilteredByTime
   getObjectsFilteredByTime22,
-  getObjectsFilteredByTime,
+  getObjectsFilteredByTime_0202,
   getSimilarObjects,
   getObjectsByUser,
   markAsInactive,

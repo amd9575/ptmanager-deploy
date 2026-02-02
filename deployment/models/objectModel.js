@@ -127,7 +127,75 @@ const deleteObject = async (id) => {
 };
 
 // Objets filtrés temporellement
-const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound) => {
+const getObjectsFilteredByTime = async (currentObjectId, objectType, objDate, isLost, isFound, currentUserId = null) => {
+  try {
+    const delta = 30;
+    const [day, month, year] = objDate.split('/');
+    const date = new Date(`${year}-${month}-${day}`);
+
+    const fromDate = new Date(date);
+    fromDate.setDate(date.getDate() - delta);
+    const toDate = new Date(date);
+    toDate.setDate(date.getDate() + delta);
+
+    const fromStr = fromDate.toISOString().split('T')[0];
+    const toStr = toDate.toISOString().split('T')[0];
+
+    // ✅ REQUÊTE DYNAMIQUE selon si userId fourni ou non
+    let query = `
+      SELECT * FROM object
+      WHERE _id_object != $1
+        AND object_type = $2
+        AND object_is_lost = $3
+        AND object_is_found = $4
+        AND object_is_actif = TRUE
+        AND object_date BETWEEN $5 AND $6
+    `;
+
+    let values = [
+      currentObjectId,
+      objectType,
+      isLost,
+      isFound,
+      fromStr,
+      toStr
+    ];
+
+    // ✅ AJOUTER FILTRE userId SI FOURNI
+    if (currentUserId) {
+      query += ` AND _id_user != $7`;
+      values.push(currentUserId);
+      console.log("🔒 Filtre userId activé:", currentUserId);
+    } else {
+      console.log("⚠️ Pas de filtre userId (app Java)");
+    }
+
+    console.log("///////////////////////////////////////////////////////////");
+    console.log("Requête filtrée reçue avec :", {
+      currentObjectId,
+      objectType,
+      objDate,
+      isLost,
+      isFound,
+      currentUserId: currentUserId || 'non fourni'
+    });
+    console.log(">>> Dates from-to :");
+    console.log("Filtrage avec dates :", { from: fromStr, to: toStr });
+    console.log("Query:", query);
+    console.log("Values:", values);
+
+    const result = await db.query(query, values);
+    console.log(`📦 ${result.rows.length} objets filtrés trouvés`);
+    return result.rows;
+
+  } catch (err) {
+    console.error('Erreur dans getObjectsFilteredByTime (model):', err);
+    throw err;
+  }
+};
+
+// Objets filtrés temporellement
+const getObjectsFilteredByTime__modifiee0202 = async (currentObjectId, objectType, objDate, isLost, isFound) => {
   try {
     const delta = 30;
     const [day, month, year] = objDate.split('/');
@@ -291,7 +359,8 @@ module.exports = {
   getObjectById,
   updateObject,
   deleteObject,
-  getObjectsFilteredByTime,
+  getObjectsFilteredByTime
+  getObjectsFilteredByTime__modifiee0202,
   getObjectsFilteredByTime__,
   getObjectsByIds,
   getObjectsByUser,
