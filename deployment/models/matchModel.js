@@ -174,6 +174,33 @@ const matchExists = async (foundObjectId, lostObjectId) => {
   const result = await db.query(query, [foundObjectId, lostObjectId]);
   return result.rows.length > 0;
 };
+/**
+ * Récupère le match en cours pour un objet spécifique (si existe)
+ */
+  const getObjectPendingMatch = async (objectId) => {
+    const query = `
+      SELECT 
+        m._id_match,
+        m._id_found_object,
+        m._id_lost_object,
+        m.created_at,
+        m.contact_initiated
+      FROM matches m
+      WHERE (m._id_found_object = $1 OR m._id_lost_object = $1)
+        AND m.contact_initiated = false
+      LIMIT 1
+    `;
+    
+    const result = await db.query(query, [objectId]);
+    
+    if (result.rows.length > 0) {
+      console.log(`✅ Match en cours trouvé pour objectId ${objectId}`);
+      return result.rows[0];
+    }
+    
+    console.log(`ℹ️ Aucun match en cours pour objectId ${objectId}`);
+    return null;
+  };
 
 module.exports = {
   createMatch,
@@ -181,5 +208,6 @@ module.exports = {
   getMatchById,
   markContactInitiated,
   deleteMatch,
-  matchExists
+  matchExists,
+  getObjectPendingMatch
 };

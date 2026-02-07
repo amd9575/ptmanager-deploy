@@ -249,9 +249,34 @@ if (match._id_loser_user !== userIdInt && match._id_finder_user !== userIdInt) {
   }
 };
 
+/**
+ * GET /api/matches/check-object/:objectId
+ * Vérifie si un objet a déjà un match en cours
+ */
+const checkObjectHasMatch = async (req, res) => {
+  const { objectId } = req.params;
+  
+  console.log('🔍 Vérification match pour objectId:', objectId);
+  
+  try {
+    const match = await matchModel.getObjectPendingMatch(objectId);
+    
+    res.status(200).json({
+      success: true,
+      hasPendingMatch: match !== null,
+      match: match || null
+    });
+    
+  } catch (err) {
+    console.error('❌ Erreur checkObjectHasMatch:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
 module.exports = {
   createMatch,
   getPendingMatches,
   confirmMatch,
-  rejectMatch
+  rejectMatch,
+  checkObjectHasMatch
 };

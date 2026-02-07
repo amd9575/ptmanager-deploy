@@ -19,4 +19,8 @@ router.post('/confirm', matchController.confirmMatch);
 // Rejette un match
 router.post('/reject', matchController.rejectMatch);
 
+// GET /api/matches/check-object/:objectId
+// Vérifie si un objet a déjà un match en cours pour eviter le faire de faire a chque fois recherche match dans la liste des objets déclarés
+router.get('/check-object/:objectId', matchController.checkObjectHasMatch);
+
 module.exports = router;
